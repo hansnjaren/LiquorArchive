@@ -1,32 +1,34 @@
+"use client"
+
 import Link from "next/link";
+import { useState } from "react";
 
 export function Tab({
   text,
   dir,
-  isHover,
-  onMouseOver,
-  onMouseLeave,
 }: {
   text: string;
   dir: string;
-  isHover?: boolean;
-  onMouseOver?: () => void;
-  onMouseLeave?: () => void;
 }) {
+  const [isHover, setIsHover] = useState(false);
+
   return (
-    <Link
-      href={dir}
-      className={
-        "p-[16px] inline-block cursor-pointer transition-colors" +
-        (isHover ? " bg-gray-200" : " bg-white")
-      }
-      onMouseOver={onMouseOver}
-      onMouseLeave={onMouseLeave}
-    >
-      {text}
+    <Link href={dir}>
+      <div
+        className={
+          "p-[16px] inline-block cursor-pointer transition-colors" +
+          (isHover ? " bg-gray-200" : " bg-white")
+        }
+        onMouseOver={() => setIsHover(true)}
+        onMouseLeave={() => setIsHover(false)}
+      >
+        {text}
+      </div>
     </Link>
   );
 }
+
+
 
 // 마우스 클릭 시 회색 유지되는 버전
 // import { useTabContext } from "./TabContext";

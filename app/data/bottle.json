@@ -1,0 +1,86 @@
+[
+  {
+    "id": "bottle1",
+    "name": "Sample Bottle 1",
+    "category": "WHISKY",
+    "country": "Scotland",
+    "volumeMl": 750,
+    "abv": 40.0,
+    "imageUrl": null,
+    "purchases": [],
+    "createdAt": "2025-07-11T08:27:00.093868",
+    "updatedAt": "2025-07-11T08:27:00.093868"
+  },
+  {
+    "id": "bottle2",
+    "name": "Sample Bottle 2",
+    "category": "WINE",
+    "country": "France",
+    "volumeMl": 750,
+    "abv": null,
+    "imageUrl": null,
+    "purchases": [],
+    "createdAt": "2025-07-11T08:27:00.093868",
+    "updatedAt": "2025-07-11T08:27:00.093868"
+  },
+  {
+    "id": "bottle3",
+    "name": "Sample Bottle 3",
+    "category": "TRADITIONAL",
+    "country": "Korea",
+    "volumeMl": 500,
+    "abv": 16.5,
+    "imageUrl": null,
+    "purchases": [],
+    "createdAt": "2025-07-11T08:27:00.093868",
+    "updatedAt": "2025-07-11T08:27:00.093868"
+  },
+  {
+    "id": "bottle4",
+    "name": "Sample Bottle 4",
+    "category": "BRANDY",
+    "country": "France",
+    "volumeMl": 700,
+    "abv": 38.0,
+    "imageUrl": null,
+    "purchases": [],
+    "createdAt": "2025-07-11T08:27:00.093868",
+    "updatedAt": "2025-07-11T08:27:00.093868"
+  },
+  {
+    "id": "bottle5",
+    "name": "Sample Bottle 5",
+    "category": "RUM",
+    "country": "Jamaica",
+    "volumeMl": 700,
+    "abv": null,
+    "imageUrl": null,
+    "purchases": [],
+    "createdAt": "2025-07-11T08:27:00.093868",
+    "updatedAt": "2025-07-11T08:27:00.093868"
+  },
+  {
+    "id": "bottle6",
+    "name": "Sample Bottle 6",
+    "category": "TEQUILA",
+    "country": "Mexico",
+    "volumeMl": 750,
+    "abv": 42.0,
+    "imageUrl": null,
+    "purchases": [],
+    "createdAt": "2025-07-11T08:30:00.000000",
+    "updatedAt": "2025-07-11T08:30:00.000000"
+  },
+  {
+    "id": "bottle7",
+    "name": "Sample Bottle 7",
+    "category": "SAKE",
+    "country": "Japan",
+    "volumeMl": 720,
+    "abv": 15.0,
+    "imageUrl": null,
+    "purchases": [],
+    "createdAt": "2025-07-11T08:31:00.000000",
+    "updatedAt": "2025-07-11T08:31:00.000000"
+  }
+]
