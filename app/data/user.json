@@ -1,0 +1,35 @@
+[
+  {
+    "id": "user1",
+    "email": "user1@example.com",
+    "password": "$2b$10$abcdefghijklmnopqrstuv",
+    "name": "WhiskyLover",
+    "image": "https://randomuser.me/api/portraits/men/1.jpg",
+    "emailVerified": "2025-07-01T10:00:00.000Z",
+    "createdAt": "2025-07-01T10:00:00.000Z",
+    "updatedAt": "2025-07-11T09:00:00.000Z",
+    "deletedAt": null
+  },
+  {
+    "id": "user2",
+    "email": "user2@example.com",
+    "password": null,
+    "name": "GinQueen",
+    "image": "https://randomuser.me/api/portraits/women/2.jpg",
+    "emailVerified": "2025-07-02T11:00:00.000Z",
+    "createdAt": "2025-07-02T11:00:00.000Z",
+    "updatedAt": "2025-07-11T09:05:00.000Z",
+    "deletedAt": null
+  },
+  {
+    "id": "user3",
+    "email": null,
+    "password": null,
+    "name": "RumPirate",
+    "image": "https://randomuser.me/api/portraits/men/3.jpg",
+    "emailVerified": null,
+    "createdAt": "2025-07-03T12:00:00.000Z",
+    "updatedAt": "2025-07-11T09:10:00.000Z",
+    "deletedAt": null
+  }
+]
