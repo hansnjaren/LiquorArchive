@@ -9,7 +9,7 @@ export default function Home() {
   const takanashiHoshino = "/32.jpg"
 
   // 현재 날짜 (예: 서버 시간 또는 new Date())
-  const now = new Date("2025-07-11T19:29:00"); // 실제 서비스에서는 new Date() 사용
+  const now = new Date(); // 실제 서비스에서는 new Date() 사용
 
   // 해당 유저의 구매 내역만 추출
   const userPurchases = purchases.filter((p) => p.userId === userId);

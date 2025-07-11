@@ -12,10 +12,10 @@ export default function Header({ children }: { children: React.ReactNode }) {
             <div id="header" className="fixed w-full bg-white opacity-100 z-50">
                 <Link href="/" className="text-4xl p-[8px] w-full block border border-black text-center">{TITLE}</Link>
                 <TabList>
-                    <Tab text="Tab 1" dir="tab1" />
-                    <Tab text="Tab 2" dir="tab2" />
-                    <Tab text="Tab 3" dir="tab3" />
-                    <Tab text="Tab 4" dir="tab4" />
+                    <Tab text="Collections" dir="tab1" />
+                    <Tab text="Purchase List" dir="tab2" />
+                    <Tab text="Log Calendar" dir="tab3" />
+                    <Tab text="My Page" dir="tab4" />
                 </TabList>
             </div>
             <div style={{ height: height }}></div>
