@@ -39,7 +39,9 @@ export default function PurchaseListItem({
           병 수: {purchase.quantity ?? 1}병
         </div>
         {purchase.memo && (
-          <div className="text-xs text-gray-400 mt-1">메모: {purchase.memo}</div>
+          <div className="text-xs text-gray-400 mt-1">
+            메모: {purchase.memo}
+          </div>
         )}
       </div>
     </li>

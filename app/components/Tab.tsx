@@ -1,15 +1,9 @@
-"use client"
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
 
-export function Tab({
-  text,
-  dir,
-}: {
-  text: string;
-  dir: string;
-}) {
+export function Tab({ text, dir }: { text: string; dir: string }) {
   const [isHover, setIsHover] = useState(false);
 
   return (
@@ -27,8 +21,6 @@ export function Tab({
     </Link>
   );
 }
-
-
 
 // 마우스 클릭 시 회색 유지되는 버전
 // import { useTabContext } from "./TabContext";

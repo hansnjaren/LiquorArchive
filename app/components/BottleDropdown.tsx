@@ -43,7 +43,9 @@ export default function BottleDropdown({
       {open && (
         <div className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto border rounded bg-white z-10 shadow">
           {filteredBottles.length === 0 ? (
-            <div className="p-2 text-gray-400 text-sm">검색 결과가 없습니다.</div>
+            <div className="p-2 text-gray-400 text-sm">
+              검색 결과가 없습니다.
+            </div>
           ) : (
             filteredBottles.map((bottle) => (
               <div

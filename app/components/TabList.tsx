@@ -1,14 +1,9 @@
-"use client"
+"use client";
 
 import React, { useState, ReactNode, ReactElement } from "react";
 export function TabList({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="w-full flex justify-center">
-      {children}
-    </div>
-  );
+  return <div className="w-full flex justify-center">{children}</div>;
 }
-
 
 // 마우스 클릭 시 회색 유지되는 버전
 // import React, { useState, ReactNode, ReactElement } from "react";

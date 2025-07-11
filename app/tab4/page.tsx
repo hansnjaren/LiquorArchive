@@ -1,4 +1,4 @@
-import userData from "../data/user.json";      // 유저 정보(JSON)
+import userData from "../data/user.json"; // 유저 정보(JSON)
 import purchases from "../data/purchase.json"; // 구매 내역(JSON)
 import { userId } from "../constants";
 
@@ -15,7 +15,7 @@ export default function MyPage() {
     0
   );
   const totalSpent = userPurchases.reduce(
-    (sum, p) => sum + ((p.price ?? 0) * (p.quantity ?? 0)),
+    (sum, p) => sum + (p.price ?? 0) * (p.quantity ?? 0),
     0
   );
 
@@ -36,11 +36,15 @@ export default function MyPage() {
       <div className="bg-gray-50 rounded p-4 mb-6 flex gap-8">
         <div>
           <div className="text-gray-500 text-sm">총 구입 병 수</div>
-          <div className="text-xl font-bold text-blue-700">{totalQuantity}병</div>
+          <div className="text-xl font-bold text-blue-700">
+            {totalQuantity}병
+          </div>
         </div>
         <div>
           <div className="text-gray-500 text-sm">총 지출 금액</div>
-          <div className="text-xl font-bold text-red-700">{totalSpent.toLocaleString()}원</div>
+          <div className="text-xl font-bold text-red-700">
+            {totalSpent.toLocaleString()}원
+          </div>
         </div>
       </div>
     </div>

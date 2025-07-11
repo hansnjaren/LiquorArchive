@@ -18,9 +18,7 @@ export default function BottleListPage() {
   // 구매 병수가 1병 이상인 bottle만 추려서 표시
   const bottlesWithPurchase = bottles.filter((bottle) => {
     const totalQuantity = purchases
-      .filter(
-        (p) => p.userId === userId && p.bottleId === bottle.id
-      )
+      .filter((p) => p.userId === userId && p.bottleId === bottle.id)
       .reduce((sum, p) => sum + (p.quantity ?? 0), 0);
     return totalQuantity > 0;
   });
@@ -30,9 +28,7 @@ export default function BottleListPage() {
       {bottlesWithPurchase.map((bottle) => {
         // 총 구매 병수
         const totalQuantity = purchases
-          .filter(
-            (p) => p.userId === userId && p.bottleId === bottle.id
-          )
+          .filter((p) => p.userId === userId && p.bottleId === bottle.id)
           .reduce((sum, p) => sum + (p.quantity ?? 0), 0);
 
         // 가장 최근 구매일
@@ -60,7 +56,8 @@ export default function BottleListPage() {
               <span className="font-semibold">카테고리:</span> {bottle.category}
             </div>
             <div>
-              <span className="font-semibold">국가:</span> {bottle.country ?? "-"}
+              <span className="font-semibold">국가:</span>{" "}
+              {bottle.country ?? "-"}
             </div>
             <div>
               <span className="font-semibold">용량:</span> {bottle.volumeMl}ml
@@ -77,7 +74,9 @@ export default function BottleListPage() {
             </div>
             <div>
               <span className="font-semibold">가장 최근 구매일:</span>{" "}
-              <span className="text-green-700 font-semibold">{latestPurchaseDate}</span>
+              <span className="text-green-700 font-semibold">
+                {latestPurchaseDate}
+              </span>
             </div>
           </div>
         );
