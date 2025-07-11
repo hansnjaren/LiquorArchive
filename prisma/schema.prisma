@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// ---------- 기본 설정 ----------
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- 공통 enum ----------
+enum BottleCategory {
+  WHISKY
+  WINE
+  BRANDY
+  RUM
+  TEQUILA
+  SAKE
+  TRADITIONAL   // 전통주
+  CHINESE       // 중국술
+  OTHER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+// ---------- 인증 & 사용자 ----------
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique               // 모든 계정은 이메일 보유
+  password      String?                        // 일반 로그인 전용 (소셜은 null)
+  name          String                        // 사이트용 닉네임
+  image         String?                        // 사이트용 프로필 이미지
+  gender        Gender                         // 성별은 필수 (추후 분석 용도)
+  emailVerified DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  // 관계
+  accounts      Account[]
+  sessions      Session[]
+  purchases     Purchase[]
+  drinkingLogs  DrinkingLog[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------- 컬렉션(구매) 영역 ----------
+model Bottle {
+  id        String   @id @default(cuid())
+  name      String
+  category  BottleCategory
+  country   String?
+  volumeMl  Int?
+  abv       Decimal? @db.Decimal(5,2)
+  imageUrl  String?
+
+  purchases Purchase[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Purchase {
+  id           String   @id @default(cuid())
+  userId       String
+  bottleId     String
+  purchaseDate DateTime
+  price        Int?
+  place        String?
+  memo         String?
+  quantity     Int
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bottle Bottle @relation(fields: [bottleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([purchaseDate])
+}
+
+// ---------- 음주량 분석 영역 ----------
+model DrinkType {
+  id           String   @id @default(cuid())
+  name         String   @unique          // Beer, Soju, Wine …
+  standardMl   Decimal  @db.Decimal(6,2) // 1병 기준 ml
+  abv          Decimal  @db.Decimal(5,2) // 평균 도수
+  caloriesKcal Decimal? @db.Decimal(6,2)
+  iconUrl      String?
+
+  drinkingLogs DrinkingLogDrinkType[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DrinkingLog {
+  id           String   @id @default(cuid())
+  userId       String
+  date         DateTime
+  locationName String?
+  locationLat  Decimal? @db.Decimal(9,6)
+  locationLng  Decimal? @db.Decimal(9,6)
+  feelingScore     Int // 1~5점으로 저장 예정
+  note         String?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  drinks DrinkingLogDrinkType[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+}
+
+model DrinkingLogDrinkType {
+  drinkingLogId String
+  drinkTypeId   String
+  amountMl      Decimal? @db.Decimal(8,2)  // 실제 마신 총량
+
+  drinkingLog DrinkingLog @relation(fields: [drinkingLogId], references: [id], onDelete: Cascade)
+  drinkType   DrinkType   @relation(fields: [drinkTypeId], references: [id])
+
+  @@id([drinkingLogId, drinkTypeId])
+}
