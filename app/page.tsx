@@ -4,6 +4,14 @@ import Image from "next/image";
 import { Block } from "./components";
 import purchases from "./data/purchase.json";
 import { userId } from "./constants";
+import { robotoCondensed, fontList } from "./fonts";
+
+const testTexts = [
+  "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.", 
+  "다람쥐 헌 쳇바퀴에 타고파.",
+  "the quick brown fox jumps over the lazy dog.",
+  "따람쮜 헌 촀빠퀴예 따꼬파."
+]
 
 export default function Home() {
   const takanashiHoshino = "/32.jpg";
@@ -66,6 +74,22 @@ export default function Home() {
       <div id="footer">
         <div className="text-5xl">Placeholder</div>
         <div className="text-4xl">Smoooooooooooooth Operatooooor</div>
+
+        <div className="m-16">
+          <div className="text-5xl">Font Test</div>
+            {fontList.map(({ name, font }) => (
+              <div key={name} className="mb-8">
+                <div className="text-2xl font-bold mb-2">{name}</div>
+                {testTexts.map((txt, idx) => (
+                  <div key={idx} className={`${font.className}`}>
+                    {txt}
+                  </div>
+                ))}
+              </div>
+            ))}
+        </div>
+
+
         <Image
           src={takanashiHoshino}
           width={0}

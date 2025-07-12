@@ -1,8 +1,6 @@
 import { useRef, useState } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import BottleDropdown from "./BottleDropdown";
-import { uuidv4 } from "../utils/uuid";
-import { getNowISOStringWithMs } from "../utils/date";
 import type { Bottle, Purchase } from "../types";
 
 function getLocalDateString(date = new Date()) {
@@ -21,32 +19,36 @@ function getLocalTimeString(date = new Date()) {
 }
 
 interface Props {
+  purchase: Purchase;
   bottles: Bottle[];
   onClose: () => void;
-  onSubmit: (purchase: Purchase) => void;
+  onSubmit: (updated: Purchase) => void;
 }
 
-export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) {
+export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit }: Props) {
   useLockBodyScroll(true);
 
-  const [bottleSearch, setBottleSearch] = useState("");
-  const [selectedBottleId, setSelectedBottleId] = useState<string | null>(null);
+  // 병 드롭다운 검색/선택 상태
+  const initialBottle = bottles.find(b => b.id === purchase.bottleId);
+  const [bottleSearch, setBottleSearch] = useState(initialBottle?.name ?? "");
+  const [selectedBottleId, setSelectedBottleId] = useState<string | null>(purchase.bottleId);
   const [bottleDropdownOpen, setBottleDropdownOpen] = useState(false);
 
-  const [price, setPrice] = useState("");
-  const [place, setPlace] = useState("");
-  const [memo, setMemo] = useState("");
-  const [quantity, setQuantity] = useState("1");
+  const [price, setPrice] = useState(String(purchase.price));
+  const [place, setPlace] = useState(purchase.place ?? "");
+  const [memo, setMemo] = useState(purchase.memo ?? "");
+  const [quantity, setQuantity] = useState(String(purchase.quantity));
 
   // 날짜/시간 input 분리
-  const now = new Date();
-  const [date, setDate] = useState(getLocalDateString(now));
-  const [time, setTime] = useState(getLocalTimeString(now));
+  const purchaseDateObj = new Date(purchase.purchaseDate);
+  const [date, setDate] = useState(getLocalDateString(purchaseDateObj));
+  const [time, setTime] = useState(getLocalTimeString(purchaseDateObj));
 
   const [priceError, setPriceError] = useState("");
   const [quantityError, setQuantityError] = useState("");
 
   // 오늘 날짜와 현재 시각 (로컬)
+  const now = new Date();
   const todayStr = getLocalDateString(now);
   const maxTime =
     date === todayStr
@@ -54,9 +56,27 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
       : undefined;
   const maxDate = todayStr;
 
-  // 드래그 시작점 추적용
+  // 드래그 UX 개선
   const modalRef = useRef<HTMLDivElement>(null);
   const [dragStartedInside, setDragStartedInside] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (modalRef.current && modalRef.current.contains(e.target as Node)) {
+      setDragStartedInside(true);
+    } else {
+      setDragStartedInside(false);
+    }
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (dragStartedInside) {
+      setDragStartedInside(false);
+      return;
+    }
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  };
 
   const validatePrice = (val: string) => {
     if (/^\d+$/.test(val) && Number(val) >= 0) return "";
@@ -96,47 +116,24 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
     if (priceErr || quantityErr) return;
 
     // 날짜+시간을 합쳐서 Date 객체 생성 (로컬 타임존 기준)
-    const purchaseDateObj = new Date(`${date}T${time}`);
-    if (purchaseDateObj.getTime() > Date.now()) {
-      alert("미래 시각의 구매 내역은 추가할 수 없습니다.");
+    const newDateObj = new Date(`${date}T${time}`);
+    if (newDateObj.getTime() > Date.now()) {
+      alert("미래 시각의 구매 내역은 수정할 수 없습니다.");
       return;
     }
-    const fullDate = purchaseDateObj.toISOString();
+    const fullDate = newDateObj.toISOString();
 
-    const newPurchase: Purchase = {
-      id: uuidv4(),
-      userId: "user-001",
+    const updatedPurchase: Purchase = {
+      ...purchase,
       bottleId: selectedBottleId,
       purchaseDate: fullDate,
       price: Number(price),
       place: place || null,
       memo: memo || null,
-      createdAt: fullDate,
-      updatedAt: fullDate,
       quantity: Number(quantity),
     };
 
-    onSubmit(newPurchase);
-  };
-
-  // 드래그 시작점이 모달 내부인지 추적
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (modalRef.current && modalRef.current.contains(e.target as Node)) {
-      setDragStartedInside(true);
-    } else {
-      setDragStartedInside(false);
-    }
-  };
-
-  // 드래그 끝점이 바깥일 때, 시작이 내부였다면 닫지 않음
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (dragStartedInside) {
-      setDragStartedInside(false);
-      return;
-    }
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
-    }
+    onSubmit(updatedPurchase);
   };
 
   return (
@@ -157,9 +154,9 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
         >
           ×
         </button>
-        <h3 className="text-xl font-bold mb-4 text-center">구매 내역 추가</h3>
+        <h3 className="text-xl font-bold mb-4 text-center">구매 내역 수정</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 병 선택 */}
+          {/* 병 선택 (검색 드롭다운) */}
           <div>
             <label className="block text-sm font-semibold mb-1">
               병 선택 (이름 검색)
@@ -227,7 +224,7 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
               type="text"
               className="w-full border rounded px-3 py-2"
               value={place}
-              onChange={(e) => setPlace(e.target.value)}
+              onChange={e => setPlace(e.target.value)}
             />
           </div>
           {/* 메모 */}
@@ -239,7 +236,7 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
               type="text"
               className="w-full border rounded px-3 py-2"
               value={memo}
-              onChange={(e) => setMemo(e.target.value)}
+              onChange={e => setMemo(e.target.value)}
             />
           </div>
           {/* 병 수 */}
@@ -263,7 +260,7 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-bold"
           >
-            추가
+            저장
           </button>
         </form>
       </div>

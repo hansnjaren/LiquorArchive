@@ -1,17 +1,23 @@
 "use client";
 import { useState } from "react";
 import bottles from "../data/bottle.json";
-import purchases from "../data/purchase.json";
+import initialPurchases from "../data/purchase.json";
 import { userId } from "../constants";
 import PurchaseList from "../components/PurchaseList";
 import PurchaseAddModal from "../components/PurchaseAddModal";
 import PurchaseDetailModal from "../components/PurchaseDetailModal";
+import type { Purchase } from "../types";
 
 export default function UserPurchaseListPage() {
+  const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
 
+  // 검색어 상태 추가
+  const [search, setSearch] = useState("");
+
+  // 내 구매내역만 필터링
   const userPurchases = purchases
     .filter((p) => p.userId === userId)
     .sort(
@@ -19,11 +25,37 @@ export default function UserPurchaseListPage() {
         new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
     );
 
+  // 검색어가 있으면 bottle 이름에 포함되는 것만 필터링
+  const filteredPurchases = search
+    ? userPurchases.filter((purchase) => {
+        const bottle = bottles.find((b) => b.id === purchase.bottleId);
+        return (
+          bottle?.name
+            ?.toLocaleLowerCase()
+            .includes(search.trim().toLocaleLowerCase()) ?? false
+        );
+      })
+    : userPurchases;
+
+  const handleAdd = (newPurchase: Purchase) => {
+    setPurchases((prev) => [...prev, newPurchase]);
+  };
+
+  const handleEdit = (updated: Purchase) => {
+    setPurchases((prev) =>
+      prev.map((p) => (p.id === updated.id ? updated : p))
+    );
+  };
+
+  const handleDelete = (id: string) => {
+    setPurchases((prev) => prev.filter((p) => p.id !== id));
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold">
-          내 구매 내역 ({userPurchases.length})
+          내 구매 내역 ({filteredPurchases.length})
         </h2>
         <button
           onClick={() => setShowAddModal(true)}
@@ -32,11 +64,21 @@ export default function UserPurchaseListPage() {
           구매 내역 추가
         </button>
       </div>
-      {userPurchases.length === 0 ? (
+      {/* 검색 input */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="술 이름 검색"
+          className="border rounded px-3 py-2 w-full"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+      {filteredPurchases.length === 0 ? (
         <div className="text-gray-500">구매 내역이 없습니다.</div>
       ) : (
         <PurchaseList
-          purchases={userPurchases}
+          purchases={filteredPurchases}
           bottles={bottles}
           onItemClick={(purchase) => {
             setSelectedPurchase(purchase);
@@ -48,6 +90,11 @@ export default function UserPurchaseListPage() {
         <PurchaseAddModal
           bottles={bottles}
           onClose={() => setShowAddModal(false)}
+          onSubmit={(newPurchase) => {
+            handleAdd(newPurchase);
+            setShowAddModal(false);
+            alert("추가 완료!\n" + JSON.stringify(newPurchase, null, 2));
+          }}
         />
       )}
       {showDetailModal && selectedPurchase && (
@@ -55,11 +102,23 @@ export default function UserPurchaseListPage() {
           purchase={selectedPurchase}
           bottle={bottles.find((b) => b.id === selectedPurchase.bottleId)}
           onClose={() => setShowDetailModal(false)}
+          bottles={bottles}
+          onEdit={(updated) => {
+            handleEdit(updated);
+            setShowDetailModal(false);
+            alert("수정 완료!\n" + JSON.stringify(updated, null, 2));
+          }}
+          onDelete={(id) => {
+            handleDelete(id);
+            setShowDetailModal(false);
+            alert("삭제 완료!\n" + id);
+          }}
         />
       )}
     </div>
   );
 }
+
 
 // "use client";
 
