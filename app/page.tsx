@@ -13,6 +13,15 @@ const testTexts = [
   "따람쮜 헌 촀빠퀴예 따꼬파."
 ]
 
+const colorList = [
+  [26, 34, 54],    // 딥 네이비 (#1A2236)
+  [35, 41, 70],    // 네이비 블루 (#232946)
+  [245, 246, 250], // 라이트 그레이 (#F5F6FA)
+  [255, 215, 0],   // 골드 (#FFD700)
+  [178, 34, 52],   // 버건디 (#B22234)
+  [132, 20, 34],   // 카민 (#841422)
+];
+
 export default function Home() {
   const takanashiHoshino = "/32.jpg";
 
@@ -75,7 +84,7 @@ export default function Home() {
         <div className="text-5xl">Placeholder</div>
         <div className="text-4xl">Smoooooooooooooth Operatooooor</div>
 
-        <div className="m-16">
+        {/* <div className="m-16">
           <div className="text-5xl">Font Test</div>
             {fontList.map(({ name, font }) => (
               <div key={name} className="mb-8">
@@ -87,6 +96,20 @@ export default function Home() {
                 ))}
               </div>
             ))}
+        </div> */}
+
+
+        <div className="m-16">
+          <div className="text-5xl">Color Test</div>
+          <div className="flex gap-2">
+            {colorList.map((rgb) => (
+              <div
+                key={rgb.join('-')}
+                className="w-16 h-16 rounded"
+                style={{ backgroundColor: `rgb(${rgb.join(',')})` }}
+              />
+            ))}
+          </div>
         </div>
 
 

@@ -3,16 +3,16 @@
 import { TabList } from "./TabList";
 import { Tab } from "./Tab";
 import Link from "next/link";
-import { HEADER_HEIGHT, TITLE } from "../constants";
+import { HEADER_HEIGHT, TAB_LIST_COLOR, TITLE, TITLE_COLOR } from "../constants";
 
 export default function Header({ children }: { children: React.ReactNode }) {
   const height = HEADER_HEIGHT;
   return (
     <>
-      <div id="header" className="fixed w-full bg-white opacity-100 z-50">
+      <div id="header" className={`fixed w-full bg-[${TAB_LIST_COLOR}] opacity-100 z-50`}>
         <Link
           href="/"
-          className="text-4xl p-[8px] w-full block border border-black text-center"
+          className={`text-4xl p-[8px] w-full bg-[${TITLE_COLOR}] text-white block text-center`}
         >
           {TITLE}
         </Link>
@@ -24,6 +24,7 @@ export default function Header({ children }: { children: React.ReactNode }) {
         </TabList>
       </div>
       <div style={{ height: height }}></div>
+
       <main>{children}</main>
     </>
   );

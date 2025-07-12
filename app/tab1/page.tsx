@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react";
-import { userId } from "../constants";
+import { CARD_COLOR, TAB_LIST_COLOR, userId } from "../constants";
 import bottles from "../data/bottle.json";
 import purchases from "../data/purchase.json";
 
@@ -77,7 +77,10 @@ export default function BottleListPage() {
             return (
               <div
                 key={bottle.id}
-                className="border rounded-lg shadow p-4 bg-white flex flex-col gap-2"
+                className={`border rounded-lg shadow p-4 flex flex-col gap-2`}
+                style={{ backgroundColor: `${TAB_LIST_COLOR}`}}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${CARD_COLOR}`)}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = `${TAB_LIST_COLOR}`)}
               >
                 <div className="w-full h-40 mb-2 flex items-center justify-center overflow-hidden rounded">
                   <img

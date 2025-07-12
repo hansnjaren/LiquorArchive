@@ -1,3 +1,4 @@
+import { CARD_COLOR, TAB_LIST_COLOR } from "../constants";
 import type { Bottle, Purchase } from "../types";
 
 export default function PurchaseListItem({
@@ -12,6 +13,9 @@ export default function PurchaseListItem({
   return (
     <li
       className="border rounded-lg shadow p-4 bg-white flex gap-4 items-center cursor-pointer"
+      style={{ backgroundColor: `${TAB_LIST_COLOR}`}}
+      onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${CARD_COLOR}`)}
+      onMouseLeave={e => (e.currentTarget.style.backgroundColor = `${TAB_LIST_COLOR}`)}
       onClick={onClick}
     >
       <div className="w-24 h-24 flex-shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">

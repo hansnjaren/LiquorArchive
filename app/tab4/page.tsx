@@ -5,7 +5,7 @@ import userData from "../data/user.json";
 import purchases from "../data/purchase.json";
 import drinkLogs from "../data/drinkLog.json";
 import bottles from "../data/bottle.json";
-import { userId } from "../constants";
+import { CARD_COLOR, TAB_LIST_COLOR, userId } from "../constants";
 import {
   startOfMonth,
   endOfMonth,
@@ -140,7 +140,11 @@ export default function MyPage() {
         </div>
       </div>
       <SummaryCard totalQuantity={totalQuantity} totalSpent={totalSpent} />
-      <div className="bg-white rounded shadow p-4 mb-8">
+      <div 
+        className="rounded shadow p-4 mb-8"
+        style={{ backgroundColor: `${TAB_LIST_COLOR}`}}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${CARD_COLOR}`)}
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = `${TAB_LIST_COLOR}`)}>
         <CalendarHeader
           currentMonth={currentMonth}
           onPrev={() => {
@@ -158,9 +162,9 @@ export default function MyPage() {
         <div className="mb-4">
           <UnitSelect
             value={
-              unit === BEER_UNIT
+              unit.name === BEER_UNIT.name
                 ? "beer"
-                : unit === SOJU_UNIT
+                : unit.name === SOJU_UNIT.name
                 ? "soju"
                 : "alcohol"
             }

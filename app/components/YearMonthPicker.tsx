@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useLockBodyScroll from "../hooks/useLockBodyScroll";
 
 // props:
 // - open: 모달 열림 여부
@@ -16,8 +17,8 @@ export default function YearMonthPicker({
   onSelect,
   years,
   monthsByYear,
-//   currentYear,
-//   currentMonth,
+  //   currentYear,
+  //   currentMonth,
   selectedYear,
   selectedMonth,
 }: {
@@ -26,11 +27,12 @@ export default function YearMonthPicker({
   onSelect: (year: number, month: number) => void;
   years: number[];
   monthsByYear: { [year: number]: number[] };
-//   currentYear: number;
-//   currentMonth: number;
+  //   currentYear: number;
+  //   currentMonth: number;
   selectedYear: number;
   selectedMonth: number;
 }) {
+  useLockBodyScroll();
   const [year, setYear] = useState(selectedYear);
   const [month, setMonth] = useState(selectedMonth);
 
@@ -45,25 +47,33 @@ export default function YearMonthPicker({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg p-6" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-2 font-bold text-lg">연/월 선택</div>
         <div className="flex gap-4">
           <select
             className="border rounded px-2 py-1"
             value={year}
-            onChange={e => setYear(Number(e.target.value))}
+            onChange={(e) => setYear(Number(e.target.value))}
           >
-            {years.map(y => (
-              <option key={y} value={y}>{y}년</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}년
+              </option>
             ))}
           </select>
           <select
             className="border rounded px-2 py-1"
             value={month}
-            onChange={e => setMonth(Number(e.target.value))}
+            onChange={(e) => setMonth(Number(e.target.value))}
           >
-            {(monthsByYear[year] || []).map(m => (
+            {(monthsByYear[year] || []).map((m) => (
               <option key={m} value={m}>
                 {m}월
               </option>
