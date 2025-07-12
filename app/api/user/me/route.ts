@@ -78,10 +78,33 @@
  *         description: 인증되지 않은 사용자
  *       404:
  *         description: 유저를 찾을 수 없음
+ *
+ *   delete:
+ *     summary: 현재 로그인된 유저 탈퇴
+ *     description: 세션을 기반으로 해당 유저를 soft delete 처리합니다.
+ *     tags:
+ *       - User
+ *     responses:
+ *       200:
+ *         description: 회원 탈퇴 완료
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 회원 탈퇴 완료
+ *       401:
+ *         description: 인증되지 않은 사용자
+ *       404:
+ *         description: 유저를 찾을 수 없음
+ *       400:
+ *         description: 이미 탈퇴한 유저입니다.
  */
 
 import { getLoggedInUser } from "@/lib/auth";
-import { updateUser } from "@/services/user.service";
+import { updateUser, deleteUser } from "@/services/user.service";
 import { NextResponse, NextRequest } from "next/server";
 
 export async function GET() {
@@ -128,7 +151,34 @@ export async function PUT(req: NextRequest) {
     });
   } catch (e: any) {
     const message = e.message || "Internal Server Error";
-    const status = message === "User not found" ? 404 : 400;
+    const status =
+      message === "User not found"
+        ? 404
+        : message === "User already deleted"
+        ? 400
+        : 500;
+
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
+export async function DELETE() {
+  try {
+    const user = await getLoggedInUser(); // 로그인 유저 가져오기
+    await deleteUser(user.id);
+
+    return NextResponse.json(
+      { message: "User deleted successfully" },
+      { status: 200 }
+    );
+  } catch (e: any) {
+    const message = e.message || "Internal Server Error";
+    const status =
+      message === "User not found"
+        ? 404
+        : message === "User already deleted"
+        ? 400
+        : 500;
 
     return NextResponse.json({ error: message }, { status });
   }

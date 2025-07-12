@@ -2,6 +2,7 @@
 import { createUserInDB } from "@/repositories/user.repository";
 import { findUserByEmail } from "@/repositories/user.repository";
 import { updateUserInDB } from "@/repositories/user.repository";
+import { softDeleteUser } from "@/repositories/user.repository";
 import { UserCreateInput } from "@/types/user.types";
 import bcrypt from "bcrypt"; // 예: 패스워드 해시화에 사용
 import jwt from "jsonwebtoken";
@@ -67,14 +68,10 @@ export async function updateUser(
   id: string,
   data: { name?: string; image?: string | null; gender?: "MALE" | "FEMALE" }
 ) {
-  try {
-    const updated = await updateUserInDB(id, data);
-    return updated;
-  } catch (e: any) {
-    if (e.code === "P2025") {
-      // Prisma Record not found
-      throw new Error("User not found");
-    }
-    throw e;
-  }
+  const updated = await updateUserInDB(id, data);
+  return updated;
+}
+
+export async function deleteUser(id: string) {
+  return softDeleteUser(id);
 }
