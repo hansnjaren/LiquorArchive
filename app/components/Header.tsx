@@ -9,10 +9,15 @@ export default function Header({ children }: { children: React.ReactNode }) {
   const height = HEADER_HEIGHT;
   return (
     <>
-      <div id="header" className={`fixed w-full bg-[${TAB_LIST_COLOR}] opacity-100 z-50`}>
+      <div 
+        id="header" 
+        className={`fixed w-full opacity-100 z-50`}
+        style={{ backgroundColor: `${TAB_LIST_COLOR}`}}
+        >
         <Link
           href="/"
-          className={`text-4xl p-[8px] w-full bg-[${TITLE_COLOR}] text-white block text-center`}
+          className={`text-4xl p-[8px] w-full text-white block text-center`}
+          style={{ backgroundColor: `${TITLE_COLOR}`}}
         >
           {TITLE}
         </Link>
