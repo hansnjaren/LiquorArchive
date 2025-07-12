@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { Block } from "./components";
 import purchases from "./data/purchase.json";
 import { userId } from "./constants";
-import { robotoCondensed, fontList } from "./fonts";
+import { BodySection } from "./components/BodySection";
 
 const testTexts = [
   "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.", 
@@ -56,49 +55,17 @@ export default function Home() {
   );
 
   return (
-    <div className="grid justify-center w-full">
-      <div id="body">
-        <div className="relative h-[50vh] w-[60vw] grid place-items-center bg-gray-500 overflow-hidden">
-          <video
-            className="absolute top-0 left-0 w-full h-full object-cover object-center"
-            src="title.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-          ></video>
-          <div className="relative z-10 w-[530px] h-[190px] bg-gray-300/50 flex rounded">
-            <Block
-              title="최근 구입 일자"
-              data={`${formatDate(latestPurchaseDateStr)}`}
-            ></Block>
-            <Block
-              title="구입 병 수"
-              data={`${recentTotalQuantity} 병`}
-            ></Block>
-            <Block title="구매액" data={`${recentTotalSpent} 원`}></Block>
-          </div>
-        </div>
-      </div>
-      <div id="footer">
+    <div className="grid place-items-center w-full">
+      <BodySection
+        videoSrc="title.mp4"
+        latestPurchaseDateStr={latestPurchaseDateStr}
+        recentTotalQuantity={recentTotalQuantity}
+        recentTotalSpent={recentTotalSpent}
+        formatDate={formatDate}
+      />
+      <div id="footer" className="w-[60%]">
         <div className="text-5xl">Placeholder</div>
         <div className="text-4xl">Smoooooooooooooth Operatooooor</div>
-
-        {/* <div className="m-16">
-          <div className="text-5xl">Font Test</div>
-            {fontList.map(({ name, font }) => (
-              <div key={name} className="mb-8">
-                <div className="text-2xl font-bold mb-2">{name}</div>
-                {testTexts.map((txt, idx) => (
-                  <div key={idx} className={`${font.className}`}>
-                    {txt}
-                  </div>
-                ))}
-              </div>
-            ))}
-        </div> */}
-
-
         <div className="m-16">
           <div className="text-5xl">Color Test</div>
           <div className="flex gap-2">
@@ -111,8 +78,6 @@ export default function Home() {
             ))}
           </div>
         </div>
-
-
         <Image
           src={takanashiHoshino}
           width={0}
@@ -127,11 +92,13 @@ export default function Home() {
 }
 
 function formatDate(dateStr: string): string {
+  if (!dateStr) return "구입 내역 없음";
   const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return "구입 내역 없음"; // 유효하지 않은 날짜 처리
+  if (isNaN(date.getTime())) return "구입 내역 없음";
 
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
   return `${yyyy}년 ${mm}월 ${dd}일`;
 }
+

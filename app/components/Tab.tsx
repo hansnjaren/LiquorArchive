@@ -11,7 +11,7 @@ export function Tab({ text, dir }: { text: string; dir: string }) {
     <Link href={dir}>
       <div
         className={
-          "p-[16px] inline-block cursor-pointer transition-colors" +
+          "px-[32px] py-[16px] mx-[16px] inline-block cursor-pointer transition-colors" +
           (isHover ? " bg-gray-200" : ` ${TAB_LIST_COLOR}`)
         }
         onMouseOver={() => setIsHover(true)}
