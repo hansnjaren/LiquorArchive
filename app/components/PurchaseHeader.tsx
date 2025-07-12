@@ -8,7 +8,7 @@ export default function PurchaseHeader({ count, onAdd }: { count: number; onAdd:
       </h2>
       <button
         onClick={onAdd}
-        className="text-white px-4 py-2 rounded cursor-pointer transition"
+        className="text-white px-4 py-2 rounded-lg cursor-pointer transition"
         style={{ backgroundColor: `${TITLE_COLOR}`}}
       >
         구매 내역 추가

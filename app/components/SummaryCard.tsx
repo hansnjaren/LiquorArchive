@@ -9,7 +9,7 @@ export default function SummaryCard({
 }) {
   return (
     <div 
-        className="rounded p-4 mb-6 flex gap-8"
+        className="rounded-lg p-4 mb-6 flex gap-8"
         style={{ backgroundColor: `${TAB_LIST_COLOR}`}}
         onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${CARD_COLOR}`)}
         onMouseLeave={e => (e.currentTarget.style.backgroundColor = `${TAB_LIST_COLOR}`)}>

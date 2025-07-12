@@ -5,7 +5,7 @@ import YearMonthPicker from "./YearMonthPicker";
 import DrinkLogAddModal from "./DrinkLogAddModal";
 import DrinkLogEditModal from "./DrinkLogEditModal";
 import { format, addMonths, subMonths } from "date-fns";
-import { TITLE_COLOR } from "../constants";
+import { TAB_LIST_COLOR, TITLE_COLOR } from "../constants";
 
 export default function CalendarView(props: any) {
   const {
@@ -44,13 +44,15 @@ export default function CalendarView(props: any) {
   } = props;
 
   return (
-    <div className="max-w-md mx-auto p-4">
+    <div 
+      className="max-w-md mx-auto p-4 mt-[15vh] rounded-2xl"
+      style={{ backgroundColor: `${TAB_LIST_COLOR}` }}>
       {/* 상단: 버튼 우측정렬, 달력 컨트롤 */}
       <div className="mb-4">
         <div className="flex justify-end mb-2">
           <button
             onClick={handleAddTodayLog}
-            className="text-white px-4 py-2 rounded transition cursor-pointer"
+            className="text-white px-4 py-2 rounded-lg transition cursor-pointer"
             style={{backgroundColor: `${TITLE_COLOR}`}}
           >
             음주 기록 추가
@@ -92,7 +94,7 @@ export default function CalendarView(props: any) {
             className="bg-white rounded-lg shadow-lg p-6 relative"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-2 w-full min-w-[220px] max-w-[340px] px-4">
+            <div className="flex items-center justify-between mb-2 min-w-[220px] w-[340px] px-4">
               <button
                 onClick={() => moveModalDate(-1)}
                 className="p-2 text-lg text-gray-600 hover:text-blue-600"

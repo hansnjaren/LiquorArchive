@@ -141,7 +141,7 @@ export default function MyPage() {
       </div>
       <SummaryCard totalQuantity={totalQuantity} totalSpent={totalSpent} />
       <div 
-        className="rounded shadow p-4 mb-8"
+        className="rounded-lg shadow p-4 mb-8"
         style={{ backgroundColor: `${TAB_LIST_COLOR}`}}
         onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${CARD_COLOR}`)}
         onMouseLeave={e => (e.currentTarget.style.backgroundColor = `${TAB_LIST_COLOR}`)}>

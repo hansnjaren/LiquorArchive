@@ -12,7 +12,7 @@ export default function PurchaseListItem({
 }) {
   return (
     <li
-      className="border rounded-lg shadow p-4 bg-white flex gap-4 items-center cursor-pointer"
+      className="border rounded-xl shadow p-4 bg-white flex gap-4 items-center cursor-pointer"
       style={{ backgroundColor: `${TAB_LIST_COLOR}`}}
       onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${CARD_COLOR}`)}
       onMouseLeave={e => (e.currentTarget.style.backgroundColor = `${TAB_LIST_COLOR}`)}

@@ -28,12 +28,12 @@ export function BottleCard({ bottle }: { bottle: any }) {
 
   return (
     <div
-      className="border rounded-lg shadow p-4 flex flex-col gap-2"
+      className="border rounded-xl shadow p-4 flex flex-col gap-2"
       style={{ backgroundColor: TAB_LIST_COLOR }}
       onMouseEnter={e => (e.currentTarget.style.backgroundColor = CARD_COLOR)}
       onMouseLeave={e => (e.currentTarget.style.backgroundColor = TAB_LIST_COLOR)}
     >
-      <div className="w-full h-40 mb-2 flex items-center justify-center overflow-hidden rounded">
+      <div className="w-full h-40 mb-2 flex items-center justify-center overflow-hidden rounded-lg">
         <img
           src={bottle.imageUrl ?? PLACEHOLDER_IMAGE}
           alt={bottle.name}

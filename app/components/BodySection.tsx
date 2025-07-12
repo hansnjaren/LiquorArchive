@@ -30,7 +30,7 @@ export function BodySection({
           playsInline
         ></video>
         <div 
-            className="relative z-10 flex rounded"
+            className="relative z-10 flex rounded-xl"
             style={{backgroundColor: OVERLAY_BG_LIGHT}}>
             <Block
                 title="최근 구입 일자"
@@ -53,7 +53,7 @@ export function BodySection({
 function Block({ title, data }: { title: string; data: string }) {
   return (
     <div 
-      className="w-[200px] h-[200px] mx-[20px] my-[20px] flex flex-col justify-center items-center rounded"
+      className="w-[200px] h-[200px] mx-[20px] my-[20px] flex flex-col justify-center items-center rounded-lg"
       style={{backgroundColor: OVERLAY_BG_DARK}}>
       <div
         className={`text-center text-white w-full text-2xl m-[8px]`}
