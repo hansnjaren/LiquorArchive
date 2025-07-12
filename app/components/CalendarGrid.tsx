@@ -1,4 +1,5 @@
 import { format, addDays, isSameDay, isSameMonth } from "date-fns";
+import { TITLE_COLOR } from "../constants";
 
 export default function CalendarGrid({
   monthStart,
@@ -36,10 +37,15 @@ export default function CalendarGrid({
         <div
           key={thisDay.toString()}
           className={`relative flex items-center justify-center w-10 h-10 rounded-full
-            ${isSameDay(thisDay, today) && isSameMonth(thisDay, monthStart) ? "bg-blue-500 text-white font-bold" : ""}
+            ${isSameDay(thisDay, today) && isSameMonth(thisDay, monthStart) ? "text-white font-bold" : ""}
             ${!isSameMonth(thisDay, monthStart) ? "text-gray-300" : ""}
             ${isFuture ? "text-gray-300 opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-blue-100 transition"}
           `}
+          style={
+            isSameDay(thisDay, today) && isSameMonth(thisDay, monthStart)
+                ? { backgroundColor: TITLE_COLOR }
+                : { backgroundColor: undefined }
+          }
           onClick={() => {
             if (isFuture) return;
             onDateClick(thisDay);
