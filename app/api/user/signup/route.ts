@@ -2,7 +2,7 @@
 
 /**
  * @swagger
- * /api/user:
+ * /api/user/signup:
  *   post:
  *     summary: Create a new user
  *     tags:
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
   try {
     const user = await createUser(parsed.data);
-    return NextResponse.json(user, { status: 201 });
+    return NextResponse.json({ ok: true, userId: user.id }, { status: 201 });
   } catch (error) {
     if (
       error instanceof Error &&
