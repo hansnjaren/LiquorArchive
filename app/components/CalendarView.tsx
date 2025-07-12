@@ -50,7 +50,7 @@ export default function CalendarView(props: any) {
         <div className="flex justify-end mb-2">
           <button
             onClick={handleAddTodayLog}
-            className="text-white px-4 py-2 rounded transition font-bold cursor-pointer"
+            className="text-white px-4 py-2 rounded transition cursor-pointer"
             style={{backgroundColor: `${TITLE_COLOR}`}}
           >
             음주 기록 추가
@@ -85,7 +85,7 @@ export default function CalendarView(props: any) {
       {/* 날짜 모달: 날짜 클릭 시 해당 날짜의 음주 기록 표시 + 날짜 이동 화살표 */}
       {selectedDate && (
         <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-modal-in"
           onClick={() => setSelectedDate(null)}
         >
           <div

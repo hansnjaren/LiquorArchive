@@ -115,7 +115,7 @@ export default function DrinkLogEditModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-modal-in"
       onMouseDown={handleMouseDown}
       onMouseUp={handleBackdropClick}
     >

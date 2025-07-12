@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import BottleDropdown from "./BottleDropdown";
 import type { Bottle, Purchase } from "../types";
+import { TITLE_COLOR } from "../constants";
 
 function getLocalDateString(date = new Date()) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -138,7 +139,7 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-modal-in"
       onMouseDown={handleMouseDown}
       onMouseUp={handleBackdropClick}
     >
@@ -258,7 +259,8 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-bold"
+            className="w-full text-white py-2 rounded cursor-pointer transition font-bold"
+            style={{ backgroundColor: `${TITLE_COLOR}`}}
           >
             저장
           </button>

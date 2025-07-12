@@ -32,7 +32,7 @@ export default function YearMonthPicker({
   selectedYear: number;
   selectedMonth: number;
 }) {
-  useLockBodyScroll();
+  useLockBodyScroll(open);
   const [year, setYear] = useState(selectedYear);
   const [month, setMonth] = useState(selectedMonth);
 

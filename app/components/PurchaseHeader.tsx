@@ -1,3 +1,5 @@
+import { TITLE_COLOR } from "../constants";
+
 export default function PurchaseHeader({ count, onAdd }: { count: number; onAdd: () => void }) {
   return (
     <div className="flex items-center justify-between mb-4">
@@ -6,7 +8,8 @@ export default function PurchaseHeader({ count, onAdd }: { count: number; onAdd:
       </h2>
       <button
         onClick={onAdd}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        className="text-white px-4 py-2 rounded cursor-pointer transition"
+        style={{ backgroundColor: `${TITLE_COLOR}`}}
       >
         구매 내역 추가
       </button>

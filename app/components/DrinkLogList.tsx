@@ -37,8 +37,7 @@ export default function DrinkLogList({
               title="삭제"
               onClick={() => {
                 if (
-                  window.confirm("정말 삭제하시겠습니까?") &&
-                  window.confirm("삭제 후 복구할 수 없습니다. 정말로 삭제할까요?")
+                  window.confirm("정말 삭제하시겠습니까?")
                 ) {
                   onDelete(log.id);
                 }
