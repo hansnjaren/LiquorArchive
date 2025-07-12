@@ -37,10 +37,10 @@ export async function POST(req: Request) {
 
     const user = await db.user.create({
       data: {
-        email,
+        email: email.toLowerCase(),
         name,
         gender,
-        password: null,
+        password: null, // 소셜 가입이므로 패스워드는 null
       },
     });
     console.log("새 유저 생성 완료!:", user.id);
