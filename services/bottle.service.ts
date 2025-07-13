@@ -1,0 +1,12 @@
+// services/bottle.service.ts
+
+import { FindBottleByCategoryQuery } from "@/types/bottle.types";
+import { findByCategory } from "@/repositories/bottle.repository";
+
+/**
+ * 카테고리 기반 bottle 목록 조회 서비스
+ */
+export async function getBottlesByCategory(params: FindBottleByCategoryQuery) {
+  // 서비스 계층에서 필요한 경우 로깅/권한 체크/필터 조정 등도 가능
+  return await findByCategory(params);
+}
