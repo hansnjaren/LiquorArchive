@@ -3,11 +3,15 @@
 
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function SocialLoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   // ✅ 이미 로그인되어 있으면 홈으로 이동
   useEffect(() => {
@@ -23,6 +27,21 @@ export default function SocialLoginPage() {
     }
   }, [status, router]);
 
+  const handleGeneralLogin = async () => {
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.ok) {
+      console.log("일반 로그인 성공!");
+      setError("");
+      router.replace("/");
+    } else {
+      setError("로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
+    }
+  };
   return (
     <main style={{ padding: "2rem" }}>
       <h1>로그인</h1>
@@ -36,6 +55,28 @@ export default function SocialLoginPage() {
       >
         Google로 로그인
       </button>
+      <hr style={{ margin: "2rem 0" }} />
+
+      {/* 일반 로그인 */}
+      <div>
+        <h2>일반 로그인</h2>
+        <input
+          type="email"
+          placeholder="이메일"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ display: "block", marginBottom: "1rem", width: "100%" }}
+        />
+        <input
+          type="password"
+          placeholder="비밀번호"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ display: "block", marginBottom: "1rem", width: "100%" }}
+        />
+        <button onClick={handleGeneralLogin}>일반 로그인</button>
+        {error && <p style={{ color: "red" }}>{error}</p>}
+      </div>
     </main>
   );
 }
