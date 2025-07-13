@@ -1,6 +1,12 @@
+// repositories/bottle.repository.ts
+
 import { BottleCategory, Prisma } from "@prisma/client";
 import { db } from "@/lib/prisma";
-import { FindBottleByCategoryQuery } from "@/types/bottle.types";
+import {
+  FindBottleByCategoryQuery,
+  FindBottleBySearchQuery,
+  FindBottleByIdParams,
+} from "@/types/bottle.types";
 
 export async function findByCategory(params: FindBottleByCategoryQuery) {
   const { category, skip, take } = params;
@@ -14,5 +20,32 @@ export async function findByCategory(params: FindBottleByCategoryQuery) {
     skip,
     take,
     orderBy: { name: "asc" },
+  });
+}
+
+export async function findBySearch(params: FindBottleBySearchQuery) {
+  const { q, category, skip, take } = params;
+
+  const where: Prisma.BottleWhereInput = {
+    name: {
+      contains: q,
+      mode: "insensitive", // 대소문자 구분 없이 검색
+    },
+    ...(category && { category: category as BottleCategory }), // 카테고리 필터링
+  };
+
+  return db.bottle.findMany({
+    where,
+    skip,
+    take,
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function findById(params: FindBottleByIdParams) {
+  const { id } = params;
+
+  return db.bottle.findUnique({
+    where: { id },
   });
 }

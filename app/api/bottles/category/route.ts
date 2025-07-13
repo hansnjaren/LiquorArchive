@@ -1,8 +1,8 @@
-// app/api/bottles/route.ts
+// app/api/bottles/category/route.ts
 
 /**
  * @swagger
- * /api/bottles:
+ * /api/bottles/category:
  *   get:
  *     summary: 카테고리로 Bottle 목록 조회
  *     tags: [Bottle]
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     const bottles = await getBottlesByCategory({ category, skip, take });
     return NextResponse.json(bottles, { status: 200 });
   } catch (err) {
-    console.error("[GET /api/bottles] 에러:", err);
+    console.error("[GET /api/bottles/category] 에러:", err);
     return NextResponse.json(
       { error: "서버 내부 오류로 데이터를 불러오지 못했습니다." },
       { status: 500 }
