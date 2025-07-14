@@ -5,6 +5,12 @@ import { JWT } from "next-auth/jwt";
 declare module "next-auth" {
   interface Session extends DefaultSession {
     /** 신규 소셜 유저 여부 */
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
     isNewUser?: boolean;
   }
 }
