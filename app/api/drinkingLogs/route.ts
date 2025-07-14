@@ -79,6 +79,12 @@ export async function POST(req: NextRequest) {
     const result = await createDrinkingLog(body, userId);
     return NextResponse.json(result, { status: 201 });
   } catch (err: any) {
+    if (
+      err instanceof Error &&
+      err.message.startsWith("Invalid drinkTypeIds")
+    ) {
+      return NextResponse.json({ message: err.message }, { status: 400 });
+    }
     console.error("Drinking log creation error:", err);
     return NextResponse.json(
       { message: err.message ?? "Server error" },

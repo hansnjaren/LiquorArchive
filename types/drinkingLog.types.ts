@@ -14,3 +14,7 @@ export type CreateDrinkingLogBody = {
   note?: string;
   drinks: DrinkInput[];
 };
+
+export type UpdateDrinkingLogBody = Partial<CreateDrinkingLogBody> & {
+  drinks?: DrinkInput[];
+};
