@@ -11,6 +11,7 @@ import {
   findPurchaseByUserId,
   getPurchaseCollectionByUser,
   updatePurchaseById,
+  deletePurchaseById,
 } from "@/repositories/purchase.repository";
 
 // ✅ Zod 스키마 정의 (string → Date 변환)
@@ -75,4 +76,8 @@ export async function updatePurchase(
       ? parsed.purchaseDate.toISOString()
       : undefined,
   });
+}
+
+export async function deletePurchase(purchaseId: string, userId: string) {
+  return await deletePurchaseById(purchaseId, userId);
 }
