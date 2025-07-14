@@ -220,6 +220,7 @@ const isNextDateDisabled: boolean | undefined =
             </button>
             <DrinkLogList
               selectedDateStr={selectedDateStr}
+              logs={logs}
               onEdit={setEditLog}
               onDelete={handleDeleteLog}
             />

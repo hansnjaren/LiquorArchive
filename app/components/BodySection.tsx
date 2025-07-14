@@ -37,12 +37,12 @@ export function BodySection({
                 data={formatDate(latestPurchaseDateStr)}
             />
             <Block
-                title="구입 병 수"
-                data={`${recentTotalQuantity} 병`}
+                title="최근 구입 주류"
+                data={`Absolut Vodka`}
             />
             <Block
-                title="구매액"
-                data={`${recentTotalSpent} 원`}
+                title="30일간 음주 일수"
+                data={`10 일`}
             />
         </div>
       </div>

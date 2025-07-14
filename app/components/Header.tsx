@@ -41,8 +41,8 @@ export default function Header({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <TabList>
-          <Tab text="Collections" dir="collections" />
           <Tab text="Purchase List" dir="purchase-list" />
+          <Tab text="Collections" dir="collections" />
           <Tab text="Log Calendar" dir="log-calendar" />
         </TabList>
       </div>

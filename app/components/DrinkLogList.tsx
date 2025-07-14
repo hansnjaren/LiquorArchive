@@ -1,37 +1,17 @@
-import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { DrinkLog } from "../types";
 
 export default function DrinkLogList({
   selectedDateStr,
+  logs,
   onEdit,
   onDelete,
 }: {
   selectedDateStr: string | null;
+  logs: DrinkLog[];
   onEdit: (log: DrinkLog) => void;
   onDelete: (id: string) => void;
 }) {
-  const [logs, setLogs] = useState<DrinkLog[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    fetch("/api/drinkingLogs/me")
-      .then(res => {
-        if (!res.ok) throw new Error("로그인을 해주세요.");
-        return res.json();
-      })
-      .then(data => {
-        setLogs(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message || "불러오기 실패");
-        setLoading(false);
-      });
-  }, []);
-
   // 날짜 필터링
   const filteredLogs =
     logs && selectedDateStr
@@ -41,8 +21,6 @@ export default function DrinkLogList({
         )
       : [];
 
-  if (loading) return <div className="text-gray-500 text-center">불러오는 중...</div>;
-  if (error) return <div className="text-red-500 text-center">{error}</div>;
   if (!filteredLogs || filteredLogs.length === 0)
     return <div className="text-gray-500 text-center">음주 기록이 없습니다.</div>;
 
