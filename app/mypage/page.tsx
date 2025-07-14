@@ -29,6 +29,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useSession } from "next-auth/react";
 
 Chart.register(
   CategoryScale,
@@ -125,9 +126,19 @@ export default function MyPage() {
     else setUnit(ALCOHOL_UNIT);
   };
 
+  const { data: session, status } = useSession();
+
   return (
     <div className="max-w-xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4">마이페이지</h2>
+
+      <div id="debugDiv" className="p-8 text-xl bold">
+        <div>{session?.user?.name ? session?.user?.name : "null"}</div>
+        <div>{session?.user?.email ? session?.user?.email : "null"}</div>
+        <div>{session?.user?.id ? session?.user?.id : "null"}</div>
+        <div>{session?.user?.image ? session.user.image : "null"}</div>
+      </div>
+
       <div className="flex items-center gap-4 mb-6">
         <img
           src={user?.image ?? "/noImage.png"}

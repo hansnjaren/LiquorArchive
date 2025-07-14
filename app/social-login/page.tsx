@@ -4,6 +4,8 @@
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { TITLE_COLOR } from "../constants";
+import Image from "next/image";
 
 export default function SocialLoginPage() {
   const { data: session, status } = useSession();
@@ -43,10 +45,62 @@ export default function SocialLoginPage() {
     }
   };
   return (
-    <main className="p-8">
-      <h1 className="cursor-pointer">로그인</h1>
-      <button
-        className="mt-4 cursor-pointer"
+    <div className="p-8 w-[40%] min-w-[300px] justify-center mx-auto">
+      <div 
+        id="login-title"
+        className="flex text-3xl w-full p-8 justify-center"
+        >
+        Login
+      </div>
+      <div
+        id="login-default"
+        className="w-full my-2"
+      >
+        <div>Email</div>
+        <input
+          className="block w-full p-2 border border-black rounded-xl"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <div
+          className="mt-4"
+        >
+          Password
+        </div>
+        <input
+          className="block w-full p-2 border border-black rounded-xl"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button
+          id="login-button"
+          className="flex justify-center w-full mt-8 p-2 text-white rounded-xl cursor-pointer"
+          style={{ backgroundColor: TITLE_COLOR }}
+          onClick={handleGeneralLogin}
+        >
+          로그인
+        </button>
+        <div
+          className="pt-2"
+          style={{ 
+            color: TITLE_COLOR,
+          }}
+        >
+          {error ? error : <span style={{ opacity: 0 }}>placeholder</span>}
+        </div>
+      </div>
+      <div className="flex items-center my-4">
+        <div className="flex-grow border-t border-gray-300"></div>
+        <span className="mx-4 text-gray-500">or</span>
+        <div className="flex-grow border-t border-gray-300"></div>
+      </div>
+
+      <div 
+        id="social-login"
+        className="relative w-full rounded-xl flex justify-center items-center cursor-pointer p-2 text-white"
+        style={{backgroundColor: TITLE_COLOR}}
         onClick={() =>
           signIn("google", {
             callbackUrl: "/social-login", // 로그인 후 다시 이 페이지로 돌아오게, 그다음 이제 홈으로 redirection
@@ -54,32 +108,23 @@ export default function SocialLoginPage() {
           })
         }
       >
-        Google로 로그인
-      </button>
-      <hr className="my-4"/>
-
-      {/* 일반 로그인 */}
-      <div>
-        {/* 이메일 아닌 입력 막는 알고리즘 적용 */}
-        <h2>일반 로그인</h2>
-        <input
-          type="email"
-          placeholder="이메일"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="block w-full mb-4 border border-black rounded-lg"
-        />
-        <input
-          type="password"
-          placeholder="비밀번호"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="block w-full mb-4 border border-black rounded-lg"
-          style={{ display: "block", marginBottom: "1rem", width: "100%" }}
-        />
-        <button className="cursor-pointer" onClick={handleGeneralLogin}>일반 로그인</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        <Image 
+          src="/GoogleLogo.png"
+          alt="/noImage.png"
+          width={24}
+          height={24}
+          className="mr-2"
+        ></Image>
+        <div>
+          Google로 로그인
+        </div>
       </div>
-    </main>
+        <div style={{
+          width: "100px",
+          height: "100px",
+          backgroundImage: "url('/GoogleLogo.png')",
+        }}></div>
+        
+    </div>
   );
 }

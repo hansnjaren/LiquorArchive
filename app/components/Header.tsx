@@ -4,28 +4,46 @@ import { TabList } from "./TabList";
 import { Tab } from "./Tab";
 import Link from "next/link";
 import { HEADER_HEIGHT, TAB_LIST_COLOR, TITLE, TITLE_COLOR } from "../constants";
+import { useSession } from "next-auth/react";
 
 export default function Header({ children }: { children: React.ReactNode }) {
   const height = HEADER_HEIGHT;
+  const { data: session, status } = useSession();
   return (
     <>
       <div 
         id="header" 
-        className={`fixed w-full opacity-100 z-50`}
-        style={{ backgroundColor: `${TAB_LIST_COLOR}`}}
+        className="fixed w-full opacity-100 z-50 min-w-[600px]"
+        style={{ backgroundColor: TAB_LIST_COLOR }}
         >
-        <Link
-          href="/"
-          className={`text-4xl p-[8px] w-full text-white block text-center`}
-          style={{ backgroundColor: `${TITLE_COLOR}`}}
+        <div 
+          className="grid justify-center items-center"
+          style={{ backgroundColor: TITLE_COLOR }}
         >
-          {TITLE}
-        </Link>
+          <Link
+            href="/"
+            className={`text-4xl p-[8px] w-full text-white block text-center`}
+          >
+            {TITLE}
+          </Link>
+          <div className="text-white absolute right-0 m-4">
+            {session?.user?.name ? 
+              <Link 
+                href="mypage"
+              >{`Hello, ${session?.user?.name}`}</Link>
+               : 
+              <Link
+              href="social-login"
+              >
+                Login
+              </Link>
+            }
+          </div>
+        </div>
         <TabList>
-          <Tab text="Collections" dir="tab1" />
-          <Tab text="Purchase List" dir="tab2" />
-          <Tab text="Log Calendar" dir="tab3" />
-          <Tab text="My Page" dir="tab4" />
+          <Tab text="Collections" dir="collections" />
+          <Tab text="Purchase List" dir="purchase-list" />
+          <Tab text="Log Calendar" dir="log-calendar" />
         </TabList>
       </div>
       <div style={{ height: height }}></div>
