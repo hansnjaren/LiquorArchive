@@ -9,6 +9,7 @@ import {
   createDrinkingLogWithDrinks,
   findDrinkingLogsByUser,
   patchDrinkingLogWithDrinks,
+  deleteDrinkingLogById,
 } from "@/repositories/drinkingLog.repository";
 import { db } from "@/lib/prisma";
 import { userId } from "@/app/constants";
@@ -137,4 +138,8 @@ export async function updateDrinkingLog(
       },
     },
   });
+}
+
+export async function deleteDrinkingLog(userId: string, logId: string) {
+  return await deleteDrinkingLogById(userId, logId);
 }

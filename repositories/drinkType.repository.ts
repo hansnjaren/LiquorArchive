@@ -9,6 +9,7 @@ export async function getAllDrinkTypes(): Promise<DrinkTypeSummary[]> {
       id: true,
       name: true,
       abv: true,
+      standardMl: true,
       iconUrl: true,
     },
     orderBy: {
@@ -19,5 +20,6 @@ export async function getAllDrinkTypes(): Promise<DrinkTypeSummary[]> {
   return drinkTypes.map((drinkType) => ({
     ...drinkType,
     abv: drinkType.abv.toNumber(),
+    standardMl: drinkType.standardMl.toNumber(),
   }));
 }

@@ -68,3 +68,18 @@ export async function patchDrinkingLogWithDrinks(
       : []),
   ]);
 }
+
+export async function deleteDrinkingLogById(userId: string, logId: string) {
+  // 유저 소유 여부 확인
+  const log = await db.drinkingLog.findUnique({
+    where: { id: logId },
+    select: { userId: true },
+  });
+
+  if (!log) throw new Error("NOT_FOUND");
+  if (log.userId !== userId) throw new Error("FORBIDDEN");
+
+  return db.drinkingLog.delete({
+    where: { id: logId },
+  });
+}
