@@ -55,7 +55,10 @@ export default function CalendarGrid({
         >
           {format(thisDay, "d")}
           {hasDrinkLog && (
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500"></span>
+            <span 
+              className="absolute top-1 right-1 w-2 h-2 rounded-full"
+              style={{ backgroundColor: TITLE_COLOR }}
+            ></span>
           )}
         </div>
       );

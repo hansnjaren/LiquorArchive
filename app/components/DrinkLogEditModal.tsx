@@ -212,7 +212,7 @@ export default function DrinkLogEditModal({
           </div>
           <button
             type="submit"
-            className="w-full text-white py-2 rounded hover:bg-blue-700 transition font-bold"
+            className="w-full text-white py-2 rounded transition font-bold cursor-pointer"
             style={{ backgroundColor: TITLE_COLOR }}
           >
             저장

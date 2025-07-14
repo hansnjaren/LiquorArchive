@@ -1,8 +1,14 @@
 import { useRef, useState, useEffect } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
-import BottleDropdown from "./BottleDropdown";
-import bottles from "../data/bottle.json";
 import { TITLE_COLOR } from "../constants";
+
+interface DrinkType {
+  id: string;
+  name: string;
+  abv: number;
+  standardMl: number;
+  iconUrl?: string | null;
+}
 
 interface DrinkLogAddModalProps {
   defaultDate?: Date;
@@ -35,12 +41,22 @@ export default function DrinkLogAddModal({
 }: DrinkLogAddModalProps) {
   useLockBodyScroll(true);
 
+  // 기존 상태
   const [date, setDate] = useState(() => getLocalDateString(defaultDate));
   const [time, setTime] = useState(() => getLocalTimeString(defaultDate));
-  const [bottleSearch, setBottleSearch] = useState("");
   const [selectedBottleId, setSelectedBottleId] = useState<string | null>(null);
-  const [bottleDropdownOpen, setBottleDropdownOpen] = useState(false);
-  const [amountMl, setAmountMl] = useState("");
+  const [drinkCount, setDrinkCount] = useState(""); // 병/캔 개수
+
+  // 추가 상태
+  const [locationName, setLocationName] = useState("");
+  const [locationLat, setLocationLat] = useState("");
+  const [locationLng, setLocationLng] = useState("");
+  const [feelingScore, setFeelingScore] = useState("3"); // 1~5, 기본 3
+  const [note, setNote] = useState("");
+
+  // 주종 목록
+  const [drinkTypes, setDrinkTypes] = useState<DrinkType[]>([]);
+  const [loadingDrinks, setLoadingDrinks] = useState(true);
 
   // 애니메이션 상태
   const [closing, setClosing] = useState(false);
@@ -58,6 +74,18 @@ export default function DrinkLogAddModal({
       ? getLocalTimeString(now)
       : undefined;
   const maxDate = todayStr;
+
+  // 주종 목록 불러오기
+  useEffect(() => {
+    setLoadingDrinks(true);
+    fetch("/api/drinkTypes")
+      .then(res => res.json())
+      .then(data => {
+        setDrinkTypes(data);
+        setLoadingDrinks(false);
+      })
+      .catch(() => setLoadingDrinks(false));
+  }, []);
 
   // 닫기 요청 → 애니메이션
   const handleRequestClose = () => {
@@ -95,21 +123,21 @@ export default function DrinkLogAddModal({
     }
   };
 
-  const handleBottleSelect = (id: string, name: string) => {
-    setSelectedBottleId(id);
-    setBottleSearch(name);
-    setBottleDropdownOpen(false);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedBottleId || !amountMl) {
-      alert("술 종류와 양을 입력하세요.");
+
+    // 방어 코드: 값 체크
+    if (!selectedBottleId) {
+      alert("술 종류를 선택하세요.");
       return;
     }
-    const bottle = bottles.find((b) => b.id === selectedBottleId);
-    if (!bottle) {
-      alert("올바른 술을 선택하세요.");
+    if (!drinkCount || isNaN(Number(drinkCount)) || Number(drinkCount) < 1) {
+      alert("병/캔 개수를 1개 이상 입력하세요.");
+      return;
+    }
+    const bottle = drinkTypes.find((b) => b.id === selectedBottleId);
+    if (!bottle || !bottle.standardMl || isNaN(Number(bottle.standardMl))) {
+      alert("올바른 술 정보를 선택하세요.");
       return;
     }
     const logDate = new Date(`${date}T${time}`);
@@ -117,18 +145,49 @@ export default function DrinkLogAddModal({
       alert("미래 시각의 기록은 추가할 수 없습니다.");
       return;
     }
+    if (!feelingScore) {
+      alert("기분 점수를 입력하세요.");
+      return;
+    }
 
-    const newLog = {
-      id: Math.random().toString(36).slice(2),
-      userId,
-      date: logDate.toISOString(),
-      bottleId: bottle.id,
-      amountMl: Number(amountMl),
-    };
+    // 병/캔 개수 × standardMl로 변환 (항상 number)
+    const amountMl = Number(drinkCount) * Number(bottle.standardMl);
 
-    alert("추가된 음주 기록 정보:\n" + JSON.stringify(newLog, null, 2));
-    onAdd(newLog);
-    handleRequestClose();
+    if (!amountMl || isNaN(amountMl) || amountMl < 1) {
+      alert("음료 용량 계산에 실패했습니다. 입력값을 확인하세요.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/drinkingLogs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: logDate.toISOString(),
+          locationName: locationName || undefined,
+          locationLat: locationLat ? Number(locationLat) : undefined,
+          locationLng: locationLng ? Number(locationLng) : undefined,
+          feelingScore: Number(feelingScore),
+          note: note || undefined,
+          drinks: [
+            { drinkTypeId: bottle.id, amountMl }
+          ]
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert("에러: " + (err.message ?? res.status));
+        return;
+      }
+
+      const result = await res.json();
+      // alert("추가된 음주 기록 정보:\n" + JSON.stringify(result, null, 2));
+      onAdd(result);
+      handleRequestClose();
+    } catch (err) {
+      alert("서버 오류: " + (err as any).toString());
+    }
   };
 
   return (
@@ -180,33 +239,127 @@ export default function DrinkLogAddModal({
               max={maxTime}
             />
           </div>
-          {/* 병 선택 (검색 드롭다운) */}
+          {/* 술 종류 선택 */}
           <div>
-            <label className="block text-sm font-semibold mb-1">술 종류 (검색)</label>
-            <BottleDropdown
-              bottles={bottles}
-              search={bottleSearch}
-              setSearch={setBottleSearch}
-              selectedBottleId={selectedBottleId}
-              setSelectedBottleId={handleBottleSelect}
-              open={bottleDropdownOpen}
-              setOpen={setBottleDropdownOpen}
-            />
+            <label className="block text-sm font-semibold mb-1">술 종류</label>
+            {loadingDrinks ? (
+              <div className="text-gray-400 text-sm">불러오는 중...</div>
+            ) : (
+              <select
+                className="w-full border rounded px-3 py-2"
+                value={selectedBottleId || ""}
+                onChange={e => setSelectedBottleId(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  선택하세요
+                </option>
+                {drinkTypes.map((drink) => (
+                  <option key={drink.id} value={drink.id}>
+                    {drink.name} {drink.abv ? `(${drink.abv}%)` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
+          {/* 병/캔 개수 */}
           <div>
-            <label className="block text-sm font-semibold mb-1">양(ml)</label>
+            <label className="block text-sm font-semibold mb-1">
+              {selectedBottleId
+                ? `${drinkTypes.find((b) => b.id === selectedBottleId)?.name} 개수`
+                : "병/캔 개수"}
+            </label>
             <input
               type="number"
               className="w-full border rounded px-3 py-2"
-              value={amountMl}
-              onChange={e => setAmountMl(e.target.value)}
+              value={drinkCount}
+              onChange={e => setDrinkCount(e.target.value)}
               min={1}
               required
+              placeholder="몇 병/캔 마셨나요?"
+            />
+            {selectedBottleId && (() => {
+              const drink = drinkTypes.find((b) => b.id === selectedBottleId);
+              if (!drink) return <div className="text-xs text-gray-500 mt-1">선택된 주종 정보 없음</div>;
+              if (!drink.standardMl) return <div className="text-xs text-gray-500 mt-1">용량 정보 없음</div>;
+              const count = Number(drinkCount);
+              const isValid = !isNaN(count) && count > 0;
+              const totalMl = isValid ? count * Number(drink.standardMl) : null;
+              return (
+                <div className="text-xs text-gray-500 mt-1">
+                  1개 = {Number(drink.standardMl)}ml
+                  {isValid && (
+                    <> &nbsp;|&nbsp; {count}개 = {totalMl}ml</>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+          {/* 장소명 */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">장소명 (선택)</label>
+            <input
+              type="text"
+              className="w-full border rounded px-3 py-2"
+              value={locationName}
+              onChange={e => setLocationName(e.target.value)}
+              placeholder="예: 홍대 주점"
+            />
+          </div>
+          {/* 위도 */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">위도 (선택)</label>
+            <input
+              type="number"
+              step="any"
+              className="w-full border rounded px-3 py-2"
+              value={locationLat}
+              onChange={e => setLocationLat(e.target.value)}
+              placeholder="예: 37.55555"
+            />
+          </div>
+          {/* 경도 */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">경도 (선택)</label>
+            <input
+              type="number"
+              step="any"
+              className="w-full border rounded px-3 py-2"
+              value={locationLng}
+              onChange={e => setLocationLng(e.target.value)}
+              placeholder="예: 126.9222"
+            />
+          </div>
+          {/* 기분 점수 */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">기분 점수 (1~5)</label>
+            <select
+              className="w-full border rounded px-3 py-2"
+              value={feelingScore}
+              onChange={e => setFeelingScore(e.target.value)}
+              required
+            >
+              <option value="1">1 (별로)</option>
+              <option value="2">2</option>
+              <option value="3">3 (보통)</option>
+              <option value="4">4</option>
+              <option value="5">5 (최고)</option>
+            </select>
+          </div>
+          {/* 메모 */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">메모 (선택)</label>
+            <input
+              type="text"
+              className="w-full border rounded px-3 py-2"
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="메모를 입력하세요"
             />
           </div>
           <button
             type="submit"
-            className="w-full text-white py-2 rounded hover:bg-blue-700 transition font-bold"
+            className="w-full text-white py-2 rounded transition font-bold cursor-pointer"
             style={{ backgroundColor: TITLE_COLOR }}
           >
             추가
