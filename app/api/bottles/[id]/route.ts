@@ -19,7 +19,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/schema/Bottle'
+ *               $ref: '#/schemas/Bottle'
  *       404:
  *         description: 해당 Bottle이 존재하지 않음
  *       500:
