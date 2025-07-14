@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "./components/Header";
 import { TITLE } from "./constants";
+import { SessionWrapper } from "./SessionWrapper";
 import { montserrat } from "./fonts";
 
 export const metadata: Metadata = {
@@ -17,7 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={montserrat.className}>
-        <Header>{children}</Header>
+        <SessionWrapper>
+          <Header>{children}</Header>
+        </SessionWrapper>
       </body>
     </html>
   );
