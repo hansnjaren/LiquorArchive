@@ -12,7 +12,7 @@ export default function UnitSelect({
       onChange={onChange}
     >
       <option value="beer">맥주 1캔(5.0%, 500ml)</option>
-      <option value="soju">소주 1병(16.5%, 355ml)</option>
+      <option value="soju">소주 1병(16.5%, 360ml)</option>
       <option value="alcohol">순수 알코올(ml)</option>
     </select>
   );

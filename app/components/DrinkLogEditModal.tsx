@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import BottleDropdown from "./BottleDropdown";
 import bottles from "../data/bottle.json";
+import { TITLE_COLOR } from "../constants";
 
 interface DrinkLogEditModalProps {
   log: any;
@@ -211,7 +212,8 @@ export default function DrinkLogEditModal({
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-bold"
+            className="w-full text-white py-2 rounded hover:bg-blue-700 transition font-bold"
+            style={{ backgroundColor: TITLE_COLOR }}
           >
             저장
           </button>

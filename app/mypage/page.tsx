@@ -41,7 +41,7 @@ Chart.register(
 );
 
 const BEER_UNIT = { name: "맥주 1캔(5.0%, 500ml)", abv: 5.0, ml: 500, label: "캔" };
-const SOJU_UNIT = { name: "소주 1병(16.5%, 355ml)", abv: 16.5, ml: 355, label: "병" };
+const SOJU_UNIT = { name: "소주 1병(16.5%, 360ml)", abv: 16.5, ml: 360, label: "병" };
 const ALCOHOL_UNIT = { name: "순수 알코올(ml)", abv: 100, ml: 1, label: "ml" };
 const UNITS = [BEER_UNIT, SOJU_UNIT, ALCOHOL_UNIT];
 
