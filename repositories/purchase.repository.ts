@@ -91,3 +91,20 @@ export async function updatePurchaseById(
     },
   });
 }
+
+export async function deletePurchaseById(purchaseId: string, userId: string) {
+  // 1️⃣ 존재 + 본인 소유 여부 확인
+  const existing = await db.purchase.findUnique({
+    where: { id: purchaseId },
+    select: { userId: true },
+  });
+
+  if (!existing || existing.userId !== userId) {
+    throw new Error("Purchase not found or access denied");
+  }
+
+  // 2️⃣ 실제 삭제
+  return await db.purchase.delete({
+    where: { id: purchaseId },
+  });
+}

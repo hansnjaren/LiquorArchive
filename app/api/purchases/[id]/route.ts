@@ -51,10 +51,35 @@
  *         description: 서버 에러
  */
 
+/**
+ * @swagger
+ * /api/purchases/{id}:
+ *   delete:
+ *     summary: 구매 내역 삭제
+ *     description: 특정 구매 ID에 해당하는 구매 내역을 삭제합니다.
+ *     tags: [Purchases]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 삭제할 구매 ID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: 삭제 완료
+ *       401:
+ *         description: 인증 필요
+ *       404:
+ *         description: 구매 내역 없음 또는 권한 없음
+ *       500:
+ *         description: 서버 오류
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { updatePurchase } from "@/services/purchase.service";
+import { updatePurchase, deletePurchase } from "@/services/purchase.service";
 
 export async function PUT(
   req: NextRequest,
@@ -85,5 +110,27 @@ export async function PUT(
       { message: err.message ?? "Internal Server Error" },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const purchaseId = params.id;
+  const userId = session.user.id;
+
+  try {
+    await deletePurchase(purchaseId, userId);
+    return new NextResponse(null, { status: 204 }); // No Content
+  } catch (err: any) {
+    const msg = err.message ?? "Internal Server Error";
+    const status = /not found|access denied/i.test(msg) ? 404 : 500;
+    return NextResponse.json({ message: msg }, { status });
   }
 }
