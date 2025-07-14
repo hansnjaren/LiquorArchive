@@ -21,3 +21,8 @@ export type PurchaseResponse = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type PurchaseCollectionItem = {
+  bottleId: string;
+  quantity: number;
+};

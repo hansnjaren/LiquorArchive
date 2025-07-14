@@ -37,3 +37,28 @@ export async function createPurchaseWithValidation(
     },
   });
 }
+
+export async function findPurchaseByUserId(userId: string) {
+  // 유저의 모든 구매 내역 조회
+  return await db.purchase.findMany({
+    where: { userId },
+    orderBy: { purchaseDate: "desc" },
+  });
+}
+
+// repositories/purchase.repository.ts
+
+export async function getPurchaseCollectionByUser(userId: string) {
+  return await db.purchase.groupBy({
+    by: ["bottleId"],
+    where: { userId },
+    _sum: {
+      quantity: true,
+    },
+    orderBy: {
+      _sum: {
+        quantity: "desc", // 혹은 최신순 정렬은 이후에 고려
+      },
+    },
+  });
+}
