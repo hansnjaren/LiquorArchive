@@ -27,8 +27,8 @@
  *         schema:
  *           type: integer
  *           minimum: 1
- *           maximum: 50
- *         description: 조회할 개수 (기본 20, 최대 50)
+ *           maximum: 32
+ *         description: 조회할 개수 (기본 20, 최대 32)
  *     responses:
  *       200:
  *         description: Bottle 목록
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 
   const category = searchParams.get("category");
   const skip = Number(searchParams.get("skip") ?? 0);
-  const takeRaw = Number(searchParams.get("take") ?? 8);
+  const takeRaw = Number(searchParams.get("take") ?? 20);
   const take = Math.min(Math.max(takeRaw, 1), 32); // 1~32 제한
 
   if (!category) {

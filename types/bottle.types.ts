@@ -15,3 +15,8 @@ export interface FindBottleBySearchQuery {
 export interface FindBottleByIdParams {
   id: string;
 }
+
+export type FindAllBottleParams = {
+  skip: number;
+  take: number;
+};

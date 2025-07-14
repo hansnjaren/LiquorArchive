@@ -6,6 +6,7 @@ import {
   FindBottleByCategoryQuery,
   FindBottleBySearchQuery,
   FindBottleByIdParams,
+  FindAllBottleParams,
 } from "@/types/bottle.types";
 
 export async function findByCategory(params: FindBottleByCategoryQuery) {
@@ -23,6 +24,7 @@ export async function findByCategory(params: FindBottleByCategoryQuery) {
   });
 }
 
+// 성능을 생각해서 일단 front...
 export async function findBySearch(params: FindBottleBySearchQuery) {
   const { q, category, skip, take } = params;
 
@@ -47,5 +49,14 @@ export async function findById(params: FindBottleByIdParams) {
 
   return db.bottle.findUnique({
     where: { id },
+  });
+}
+
+export async function findAllBottles(params: FindAllBottleParams) {
+  const { skip, take } = params;
+  return db.bottle.findMany({
+    skip,
+    take,
+    orderBy: { name: "asc" },
   });
 }

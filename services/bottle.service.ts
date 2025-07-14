@@ -4,11 +4,13 @@ import {
   FindBottleByCategoryQuery,
   FindBottleBySearchQuery,
   FindBottleByIdParams,
+  FindAllBottleParams,
 } from "@/types/bottle.types";
 import {
   findByCategory,
   findBySearch,
   findById,
+  findAllBottles,
 } from "@/repositories/bottle.repository";
 
 /**
@@ -27,4 +29,9 @@ export async function getBottlesBySearch(params: FindBottleBySearchQuery) {
 export async function getBottleById(params: FindBottleByIdParams) {
   // ID로 단일 bottle 조회
   return await findById(params);
+}
+
+export async function getAllBottles(params: FindAllBottleParams) {
+  // 전체 bottle 목록 조회
+  return await findAllBottles(params);
 }
