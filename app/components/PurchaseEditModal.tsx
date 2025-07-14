@@ -185,9 +185,9 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
           {/* 병 선택 (검색 드롭다운) */}
           <div>
             <label className="block text-sm font-semibold mb-1">
-              병 선택 (이름 검색)
+              병 이름
             </label>
-            <BottleDropdown
+            {/* <BottleDropdown
               bottles={bottles}
               search={bottleSearch}
               setSearch={setBottleSearch}
@@ -195,7 +195,10 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
               setSelectedBottleId={handleBottleSelect}
               open={bottleDropdownOpen}
               setOpen={setBottleDropdownOpen}
-            />
+              
+            /> */}
+            
+            <div className="w-full border rounded px-3 py-2">{initialBottle?.name}</div>
           </div>
           {/* 날짜/시간 분리 */}
           <div>

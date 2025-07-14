@@ -187,7 +187,7 @@ export default function DrinkLogEditModal({
           {/* 병 선택 (검색 드롭다운) */}
           <div>
             <label className="block text-sm font-semibold mb-1">술 종류 (검색)</label>
-            <BottleDropdown
+            {/* <BottleDropdown
               bottles={bottles}
               search={bottleSearch}
               setSearch={setBottleSearch}
@@ -195,7 +195,8 @@ export default function DrinkLogEditModal({
               setSelectedBottleId={handleBottleSelect}
               open={bottleDropdownOpen}
               setOpen={setBottleDropdownOpen}
-            />
+            /> */}
+            <div className="w-full border rounded px-3 py-2">{bottleSearch}</div>
           </div>
           <div>
             <label className="block text-sm font-semibold mb-1">양(ml)</label>

@@ -43,9 +43,10 @@ export default function SocialLoginPage() {
     }
   };
   return (
-    <main style={{ padding: "2rem" }}>
-      <h1>로그인</h1>
+    <main className="p-8">
+      <h1 className="cursor-pointer">로그인</h1>
       <button
+        className="mt-4 cursor-pointer"
         onClick={() =>
           signIn("google", {
             callbackUrl: "/social-login", // 로그인 후 다시 이 페이지로 돌아오게, 그다음 이제 홈으로 redirection
@@ -55,26 +56,28 @@ export default function SocialLoginPage() {
       >
         Google로 로그인
       </button>
-      <hr style={{ margin: "2rem 0" }} />
+      <hr className="my-4"/>
 
       {/* 일반 로그인 */}
       <div>
+        {/* 이메일 아닌 입력 막는 알고리즘 적용 */}
         <h2>일반 로그인</h2>
         <input
           type="email"
           placeholder="이메일"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={{ display: "block", marginBottom: "1rem", width: "100%" }}
+          className="block w-full mb-4 border border-black rounded-lg"
         />
         <input
           type="password"
           placeholder="비밀번호"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="block w-full mb-4 border border-black rounded-lg"
           style={{ display: "block", marginBottom: "1rem", width: "100%" }}
         />
-        <button onClick={handleGeneralLogin}>일반 로그인</button>
+        <button className="cursor-pointer" onClick={handleGeneralLogin}>일반 로그인</button>
         {error && <p style={{ color: "red" }}>{error}</p>}
       </div>
     </main>
