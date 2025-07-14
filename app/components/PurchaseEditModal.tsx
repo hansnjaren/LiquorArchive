@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import BottleDropdown from "./BottleDropdown";
 import type { Bottle, Purchase } from "../types";
@@ -61,6 +61,28 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
   const modalRef = useRef<HTMLDivElement>(null);
   const [dragStartedInside, setDragStartedInside] = useState(false);
 
+  // --- 애니메이션 관련 추가 부분 ---
+  const [closing, setClosing] = useState(false);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  const handleRequestClose = () => {
+    setClosing(true);
+  };
+
+  useEffect(() => {
+    if (!closing) return;
+    const el = backdropRef.current;
+    if (!el) return;
+    const handleAnimationEnd = () => {
+      onClose();
+    };
+    el.addEventListener("animationend", handleAnimationEnd);
+    return () => {
+      el.removeEventListener("animationend", handleAnimationEnd);
+    };
+  }, [closing, onClose]);
+  // --- 끝 ---
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (modalRef.current && modalRef.current.contains(e.target as Node)) {
       setDragStartedInside(true);
@@ -75,7 +97,7 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
       return;
     }
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
+      handleRequestClose();
     }
   };
 
@@ -139,7 +161,10 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-modal-in"
+      ref={backdropRef}
+      className={`fixed inset-0 bg-black/40 flex items-center justify-center z-50 ${
+        closing ? "animate-modal-out" : "animate-modal-in"
+      }`}
       onMouseDown={handleMouseDown}
       onMouseUp={handleBackdropClick}
     >
@@ -149,7 +174,7 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
         onClick={e => e.stopPropagation()}
       >
         <button
-          onClick={onClose}
+          onClick={handleRequestClose}
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl"
           aria-label="닫기"
         >

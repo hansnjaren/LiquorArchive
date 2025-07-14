@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import CalendarHeader from "./CalendarHeader";
 import CalendarGrid from "./CalendarGrid";
 import DrinkLogList from "./DrinkLogList";
@@ -43,6 +44,51 @@ export default function CalendarView(props: any) {
     userId,
   } = props;
 
+  // --- 날짜 모달 닫힘 애니메이션 상태 추가 ---
+  const [dateModalClosing, setDateModalClosing] = useState(false);
+  const dateModalBackdropRef = useRef<HTMLDivElement>(null);
+
+  // 닫기 요청시 애니메이션 후 실제로 닫기
+  const handleDateModalRequestClose = () => {
+    setDateModalClosing(true);
+  };
+
+  useEffect(() => {
+    if (!dateModalClosing) return;
+    const el = dateModalBackdropRef.current;
+    if (!el) return;
+    const handleAnimationEnd = () => {
+      setDateModalClosing(false);
+      setSelectedDate(null);
+    };
+    el.addEventListener("animationend", handleAnimationEnd);
+    return () => {
+      el.removeEventListener("animationend", handleAnimationEnd);
+    };
+  }, [dateModalClosing, setSelectedDate]);
+
+  // 드래그 UX 개선
+  const dateModalContentRef = useRef<HTMLDivElement>(null);
+  const [dragStartedInside, setDragStartedInside] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (dateModalContentRef.current && dateModalContentRef.current.contains(e.target as Node)) {
+      setDragStartedInside(true);
+    } else {
+      setDragStartedInside(false);
+    }
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (dragStartedInside) {
+      setDragStartedInside(false);
+      return;
+    }
+    if (dateModalContentRef.current && !dateModalContentRef.current.contains(e.target as Node)) {
+      handleDateModalRequestClose();
+    }
+  };
+
   return (
     <div 
       className="max-w-md mx-auto p-4 mt-[15vh] rounded-2xl"
@@ -87,10 +133,15 @@ export default function CalendarView(props: any) {
       {/* 날짜 모달: 날짜 클릭 시 해당 날짜의 음주 기록 표시 + 날짜 이동 화살표 */}
       {selectedDate && (
         <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-modal-in"
-          onClick={() => setSelectedDate(null)}
+          ref={dateModalBackdropRef}
+          className={`fixed inset-0 bg-black/40 flex items-center justify-center z-50 ${
+            dateModalClosing ? "animate-modal-out" : "animate-modal-in"
+          }`}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleBackdropClick}
         >
           <div
+            ref={dateModalContentRef}
             className="bg-white rounded-lg shadow-lg p-6 relative"
             onClick={(e) => e.stopPropagation()}
           >
@@ -119,7 +170,7 @@ export default function CalendarView(props: any) {
               </button>
             </div>
             <button
-              onClick={() => setSelectedDate(null)}
+              onClick={handleDateModalRequestClose}
               className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl"
               aria-label="닫기"
             >

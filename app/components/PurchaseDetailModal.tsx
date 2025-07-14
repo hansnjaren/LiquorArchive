@@ -1,5 +1,5 @@
 import type { Bottle, Purchase } from "../types";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import PurchaseEditModal from "./PurchaseEditModal";
 
@@ -20,13 +20,34 @@ export default function PurchaseDetailModal({
   onEdit,
   onDelete,
 }: Props) {
-  useLockBodyScroll(true); // body 스크롤 막기
+  useLockBodyScroll(true);
 
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // 닫힘 애니메이션 상태
+  const [closing, setClosing] = useState(false);
+  const backdropRef = useRef<HTMLDivElement>(null);
 
   // 드래그 UX 개선
   const modalRef = useRef<HTMLDivElement>(null);
   const [dragStartedInside, setDragStartedInside] = useState(false);
+
+  const handleRequestClose = () => {
+    setClosing(true);
+  };
+
+  useEffect(() => {
+    if (!closing) return;
+    const el = backdropRef.current;
+    if (!el) return;
+    const handleAnimationEnd = () => {
+      onClose();
+    };
+    el.addEventListener("animationend", handleAnimationEnd);
+    return () => {
+      el.removeEventListener("animationend", handleAnimationEnd);
+    };
+  }, [closing, onClose]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (modalRef.current && modalRef.current.contains(e.target as Node)) {
@@ -42,14 +63,17 @@ export default function PurchaseDetailModal({
       return;
     }
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
+      handleRequestClose();
     }
   };
 
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-modal-in"
+        ref={backdropRef}
+        className={`fixed inset-0 bg-black/40 flex items-center justify-center z-50 ${
+          closing ? "animate-modal-out" : "animate-modal-in"
+        }`}
         onMouseDown={handleMouseDown}
         onMouseUp={handleBackdropClick}
       >
@@ -59,7 +83,7 @@ export default function PurchaseDetailModal({
           onClick={e => e.stopPropagation()}
         >
           <button
-            onClick={onClose}
+            onClick={handleRequestClose}
             className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl"
             aria-label="닫기"
           >

@@ -1,8 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import BottleDropdown from "./BottleDropdown";
 import { uuidv4 } from "../utils/uuid";
-import { getNowISOStringWithMs } from "../utils/date";
 import type { Bottle, Purchase } from "../types";
 import { TITLE_COLOR } from "../constants";
 
@@ -39,7 +38,6 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
   const [memo, setMemo] = useState("");
   const [quantity, setQuantity] = useState("1");
 
-  // 날짜/시간 input 분리
   const now = new Date();
   const [date, setDate] = useState(getLocalDateString(now));
   const [time, setTime] = useState(getLocalTimeString(now));
@@ -47,7 +45,6 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
   const [priceError, setPriceError] = useState("");
   const [quantityError, setQuantityError] = useState("");
 
-  // 오늘 날짜와 현재 시각 (로컬)
   const todayStr = getLocalDateString(now);
   const maxTime =
     date === todayStr
@@ -55,9 +52,30 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
       : undefined;
   const maxDate = todayStr;
 
-  // 드래그 시작점 추적용
   const modalRef = useRef<HTMLDivElement>(null);
   const [dragStartedInside, setDragStartedInside] = useState(false);
+
+  // --- 애니메이션 관련 추가 부분 ---
+  const [closing, setClosing] = useState(false);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  const handleRequestClose = () => {
+    setClosing(true);
+  };
+
+  useEffect(() => {
+    if (!closing) return;
+    const el = backdropRef.current;
+    if (!el) return;
+    const handleAnimationEnd = () => {
+      onClose();
+    };
+    el.addEventListener("animationend", handleAnimationEnd);
+    return () => {
+      el.removeEventListener("animationend", handleAnimationEnd);
+    };
+  }, [closing, onClose]);
+  // --- 끝 ---
 
   const validatePrice = (val: string) => {
     if (/^\d+$/.test(val) && Number(val) >= 0) return "";
@@ -96,7 +114,6 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
     }
     if (priceErr || quantityErr) return;
 
-    // 날짜+시간을 합쳐서 Date 객체 생성 (로컬 타임존 기준)
     const purchaseDateObj = new Date(`${date}T${time}`);
     if (purchaseDateObj.getTime() > Date.now()) {
       alert("미래 시각의 구매 내역은 추가할 수 없습니다.");
@@ -120,7 +137,6 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
     onSubmit(newPurchase);
   };
 
-  // 드래그 시작점이 모달 내부인지 추적
   const handleMouseDown = (e: React.MouseEvent) => {
     if (modalRef.current && modalRef.current.contains(e.target as Node)) {
       setDragStartedInside(true);
@@ -129,20 +145,22 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
     }
   };
 
-  // 드래그 끝점이 바깥일 때, 시작이 내부였다면 닫지 않음
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (dragStartedInside) {
       setDragStartedInside(false);
       return;
     }
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
+      handleRequestClose();
     }
   };
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-modal-in"
+      ref={backdropRef}
+      className={`fixed inset-0 bg-black/40 flex items-center justify-center z-50 ${
+        closing ? "animate-modal-out" : "animate-modal-in"
+      }`}
       onMouseDown={handleMouseDown}
       onMouseUp={handleBackdropClick}
     >
@@ -152,7 +170,7 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
         onClick={e => e.stopPropagation()}
       >
         <button
-          onClick={onClose}
+          onClick={handleRequestClose}
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl"
           aria-label="닫기"
         >

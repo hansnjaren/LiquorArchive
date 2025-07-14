@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import BottleDropdown from "./BottleDropdown";
 import bottles from "../data/bottle.json";
@@ -46,6 +46,10 @@ export default function DrinkLogEditModal({
   const [bottleDropdownOpen, setBottleDropdownOpen] = useState(false);
   const [amountMl, setAmountMl] = useState(String(log.amountMl));
 
+  // 애니메이션 상태
+  const [closing, setClosing] = useState(false);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
   // 드래그 UX
   const modalRef = useRef<HTMLDivElement>(null);
   const [dragStartedInside, setDragStartedInside] = useState(false);
@@ -58,6 +62,24 @@ export default function DrinkLogEditModal({
       ? getLocalTimeString(now)
       : undefined;
   const maxDate = todayStr;
+
+  // 닫기 요청 → 애니메이션
+  const handleRequestClose = () => {
+    setClosing(true);
+  };
+
+  useEffect(() => {
+    if (!closing) return;
+    const el = backdropRef.current;
+    if (!el) return;
+    const handleAnimationEnd = () => {
+      onClose();
+    };
+    el.addEventListener("animationend", handleAnimationEnd);
+    return () => {
+      el.removeEventListener("animationend", handleAnimationEnd);
+    };
+  }, [closing, onClose]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (modalRef.current && modalRef.current.contains(e.target as Node)) {
@@ -73,7 +95,7 @@ export default function DrinkLogEditModal({
       return;
     }
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
+      handleRequestClose();
     }
   };
 
@@ -110,12 +132,15 @@ export default function DrinkLogEditModal({
 
     alert("수정된 음주 기록 정보:\n" + JSON.stringify(updatedLog, null, 2));
     onEdit(updatedLog);
-    onClose();
+    handleRequestClose();
   };
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-modal-in"
+      ref={backdropRef}
+      className={`fixed inset-0 bg-black/40 flex items-center justify-center z-50 ${
+        closing ? "animate-modal-out" : "animate-modal-in"
+      }`}
       onMouseDown={handleMouseDown}
       onMouseUp={handleBackdropClick}
     >
@@ -125,7 +150,7 @@ export default function DrinkLogEditModal({
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={onClose}
+          onClick={handleRequestClose}
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl"
           aria-label="닫기"
         >
