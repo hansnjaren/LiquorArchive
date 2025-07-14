@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import BottleDropdown from "./BottleDropdown";
-import { uuidv4 } from "../utils/uuid";
-import type { Bottle, Purchase } from "../types";
 import { TITLE_COLOR } from "../constants";
+import type { Bottle, Purchase } from "../types";
 
 function getLocalDateString(date = new Date()) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -23,7 +22,7 @@ function getLocalTimeString(date = new Date()) {
 interface Props {
   bottles: Bottle[];
   onClose: () => void;
-  onSubmit: (purchase: Purchase) => void;
+  onSubmit: (purchase: Omit<Purchase, "id" | "createdAt" | "updatedAt" | "userId"> & { bottleId: string }) => void;
 }
 
 export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) {
@@ -55,7 +54,6 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
   const modalRef = useRef<HTMLDivElement>(null);
   const [dragStartedInside, setDragStartedInside] = useState(false);
 
-  // --- 애니메이션 관련 추가 부분 ---
   const [closing, setClosing] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
 
@@ -75,7 +73,6 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
       el.removeEventListener("animationend", handleAnimationEnd);
     };
   }, [closing, onClose]);
-  // --- 끝 ---
 
   const validatePrice = (val: string) => {
     if (/^\d+$/.test(val) && Number(val) >= 0) return "";
@@ -121,20 +118,14 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
     }
     const fullDate = purchaseDateObj.toISOString();
 
-    const newPurchase: Purchase = {
-      id: uuidv4(),
-      userId: "user-001",
+    onSubmit({
       bottleId: selectedBottleId,
       purchaseDate: fullDate,
       price: Number(price),
-      place: place || null,
-      memo: memo || null,
-      createdAt: fullDate,
-      updatedAt: fullDate,
+      place: place || undefined,
+      memo: memo || undefined,
       quantity: Number(quantity),
-    };
-
-    onSubmit(newPurchase);
+    });
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {

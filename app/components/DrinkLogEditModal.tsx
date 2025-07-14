@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import { TITLE_COLOR } from "../constants";
-import type { DrinkType, DrinkLog } from "../types/index"
+import type { DrinkType, DrinkLog } from "../types";
+import { DrinkTypeDropdown } from "./DrinkTypeDropdown";
 
 interface Props {
   log: DrinkLog;
@@ -25,30 +26,6 @@ function getLocalTimeString(date = new Date()) {
   return pad(date.getHours()) + ":" + pad(date.getMinutes());
 }
 
-function getInitialDrinks(log: DrinkLog, bottles: DrinkType[]) {
-  let arr: { bottleId: string; count: string }[] =
-    log.drinks && Array.isArray(log.drinks) && log.drinks.length > 0
-      ? log.drinks.map((d) => {
-          const bottle = d.drinkType || bottles.find((b) => b.id === d.drinkTypeId);
-          let count = "";
-          if (bottle && bottle.standardMl) {
-            count = String(Math.round(Number(d.amountMl) / Number(bottle.standardMl)));
-          }
-          return {
-            bottleId: d.drinkTypeId,
-            count,
-          };
-        })
-      : [];
-  if (
-    arr.length === 0 ||
-    (arr[arr.length - 1].bottleId && arr[arr.length - 1].count)
-  ) {
-    arr.push({ bottleId: "", count: "" });
-  }
-  return arr;
-}
-
 export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: Props) {
   useLockBodyScroll(true);
 
@@ -69,14 +46,61 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
   );
   const [note, setNote] = useState(log.note ?? "");
 
-  // 항상 마지막에 빈 입력란이 있도록!
-  const [drinks, setDrinks] = useState<{ bottleId: string; count: string }[]>(
-    () => getInitialDrinks(log, bottles)
+  // drinks에 search, dropdownOpen 필드 추가
+  const [drinks, setDrinks] = useState<{ bottleId: string; count: string; search: string; dropdownOpen: boolean }[]>(
+    () => {
+      let arr =
+        log.drinks && Array.isArray(log.drinks) && log.drinks.length > 0
+          ? log.drinks.map((d) => {
+              const bottle = d.drinkType || bottles.find((b) => b.id === d.drinkTypeId);
+              let count = "";
+              if (bottle && bottle.standardMl) {
+                count = String(Math.round(Number(d.amountMl) / Number(bottle.standardMl)));
+              }
+              return {
+                bottleId: d.drinkTypeId,
+                count,
+                search: bottle?.name ?? "",
+                dropdownOpen: false,
+              };
+            })
+          : [];
+      if (
+        arr.length === 0 ||
+        (arr[arr.length - 1].bottleId && arr[arr.length - 1].count)
+      ) {
+        arr.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
+      }
+      return arr;
+    }
   );
 
-  // bottles이 비동기로 바뀔 수 있으므로, log/bottles이 바뀌면 drinks도 갱신
   useEffect(() => {
-    setDrinks(getInitialDrinks(log, bottles));
+    setDrinks(() => {
+      let arr =
+        log.drinks && Array.isArray(log.drinks) && log.drinks.length > 0
+          ? log.drinks.map((d) => {
+              const bottle = d.drinkType || bottles.find((b) => b.id === d.drinkTypeId);
+              let count = "";
+              if (bottle && bottle.standardMl) {
+                count = String(Math.round(Number(d.amountMl) / Number(bottle.standardMl)));
+              }
+              return {
+                bottleId: d.drinkTypeId,
+                count,
+                search: bottle?.name ?? "",
+                dropdownOpen: false,
+              };
+            })
+          : [];
+      if (
+        arr.length === 0 ||
+        (arr[arr.length - 1].bottleId && arr[arr.length - 1].count)
+      ) {
+        arr.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
+      }
+      return arr;
+    });
     // eslint-disable-next-line
   }, [log, bottles]);
 
@@ -120,7 +144,7 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
   };
 
   // drinks 입력 변경 핸들러 (항상 마지막에 빈 입력란이 있도록 보장)
-  const handleDrinkChange = (idx: number, key: "bottleId" | "count", value: string) => {
+  const handleDrinkChange = (idx: number, key: "bottleId" | "count" | "search" | "dropdownOpen", value: string | boolean) => {
     setDrinks(prev => {
       const next = [...prev];
       next[idx] = { ...next[idx], [key]: value };
@@ -129,7 +153,7 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
         next[next.length - 1].bottleId &&
         next[next.length - 1].count
       ) {
-        next.push({ bottleId: "", count: "" });
+        next.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
       }
       // 여러 개 입력 후 중간 행을 비우면, 마지막에 빈 칸이 2개 이상 생길 수 있으므로, 
       // 마지막 한 칸만 빈 칸이 되도록 정리
@@ -155,7 +179,7 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
         next.length === 0 ||
         (next[next.length - 1].bottleId && next[next.length - 1].count)
       ) {
-        next.push({ bottleId: "", count: "" });
+        next.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
       }
       return next;
     });
@@ -279,19 +303,20 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
             <label className="block text-sm font-semibold mb-1">술 종류 및 개수</label>
             {drinks.map((drink, idx) => (
               <div key={idx} className="flex items-end gap-2 mb-2">
-                <select
-                  className="border rounded px-2 py-1 flex-1"
-                  value={drink.bottleId}
-                  onChange={e => handleDrinkChange(idx, "bottleId", e.target.value)}
-                  required={idx === 0}
-                >
-                  <option value="" disabled>술 종류</option>
-                  {bottles.map(bottle => (
-                    <option key={bottle.id} value={bottle.id}>
-                      {bottle.name} {bottle.abv ? `(${bottle.abv}%)` : ""}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex-1">
+                  <DrinkTypeDropdown
+                    bottles={bottles}
+                    value={drink.bottleId}
+                    search={drink.search}
+                    setSearch={v => handleDrinkChange(idx, "search", v)}
+                    onSelect={(id, name) => {
+                      handleDrinkChange(idx, "bottleId", id);
+                      handleDrinkChange(idx, "search", name);
+                    }}
+                    open={drink.dropdownOpen}
+                    setOpen={v => handleDrinkChange(idx, "dropdownOpen", v)}
+                  />
+                </div>
                 <input
                   type="number"
                   min={1}
@@ -318,7 +343,6 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
                     : "\u00A0"
                   }
                 </span>
-                {/* 삭제 버튼: 마지막 행이 아닐 때만 노출 */}
                 {drinks.length > 1 && idx !== drinks.length - 1 ? (
                   <button
                     type="button"

@@ -8,7 +8,7 @@ interface Props {
   selected: Purchase | null;
   bottles: any[];
   onCloseAdd: () => void;
-  onSubmitAdd: (p: Purchase) => void;
+  onSubmitAdd: (p: Omit<Purchase, "userId" | "id" | "createdAt" | "updatedAt"> & { bottleId: string }) => void;
   onCloseDetail: () => void;
   onEdit: (p: Purchase) => void;
   onDelete: (id: string) => void;

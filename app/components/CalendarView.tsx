@@ -7,7 +7,7 @@ import DrinkLogAddModal from "./DrinkLogAddModal";
 import DrinkLogEditModal from "./DrinkLogEditModal";
 import { format, addMonths, subMonths } from "date-fns";
 import { TAB_LIST_COLOR, TITLE_COLOR } from "../constants";
-import { DrinkType } from "../types";
+import { DrinkType, DrinkLog } from "../types";
 
 export default function CalendarView(props: any) {
   const {
@@ -38,20 +38,10 @@ export default function CalendarView(props: any) {
     handleAddModalLog,
     handleYearMonthSelect,
     moveModalDate,
+    bottles,
+    logs,
     userId,
   } = props;
-
-  // 병(주종) 목록을 DB에서 fetch
-  const [bottles, setBottles] = useState<DrinkType[]>([]);
-  useEffect(() => {
-    fetch("/api/drinkTypes")
-      .then(res => {
-        if (!res.ok) throw new Error("주종 목록을 불러오지 못했습니다.");
-        return res.json();
-      })
-      .then(setBottles)
-      .catch(e => alert(e.message));
-  }, []);
 
   // 날짜 모달 닫힘 애니메이션
   const [dateModalClosing, setDateModalClosing] = useState(false);
@@ -97,8 +87,29 @@ export default function CalendarView(props: any) {
     }
   };
 
-  // 선택한 날짜를 yyyy-MM-dd 문자열로 변환
+  // 오늘로 이동 버튼 비활성화 조건
+  const isTodayMonth =
+    currentMonth.getFullYear() === today.getFullYear() &&
+    currentMonth.getMonth() === today.getMonth();
+
+  // 가장 빠른 기록 날짜 계산
+  const minLogDate = logs && logs.length > 0
+    ? new Date(Math.min(...logs.map((log: DrinkLog) => new Date(log.date).getTime())))
+    : today;
+  const minLogDateStr = format(minLogDate, "yyyy-MM-dd");
+  const todayStr = format(today, "yyyy-MM-dd");
   const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+
+  // 날짜 모달에서 좌우 이동 제한
+const isPrevDateDisabled: boolean | undefined =
+  selectedDateStr
+    ? format(new Date(selectedDateStr), "yyyy-MM-dd") <= minLogDateStr
+    : undefined;
+
+const isNextDateDisabled: boolean | undefined =
+  selectedDateStr
+    ? format(new Date(selectedDateStr), "yyyy-MM-dd") >= todayStr
+    : undefined;
 
   return (
     <div
@@ -106,15 +117,31 @@ export default function CalendarView(props: any) {
       style={{ backgroundColor: `${TAB_LIST_COLOR}` }}>
       {/* 상단: 버튼 우측정렬, 달력 컨트롤 */}
       <div className="mb-4">
-        <div className="flex justify-end mb-2">
-          <button
-            onClick={handleAddTodayLog}
-            className="text-white px-4 py-2 rounded-lg transition cursor-pointer"
-            style={{ backgroundColor: `${TITLE_COLOR}` }}
-          >
-            음주 기록 추가
-          </button>
+        {/* 상단: 오늘로 이동(중앙) + 음주 기록 추가(오른쪽) */}
+        <div className="flex items-center mb-4 relative min-h-[40px]">
+          {/* 오늘로 이동 버튼: 중앙 */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <button
+              className="text-white px-4 py-2 rounded-lg transition cursor-pointer"
+              style={{ backgroundColor: `${TITLE_COLOR}` }}
+              onClick={() => setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1))}
+              disabled={isTodayMonth}
+            >
+              오늘로 이동
+            </button>
+          </div>
+          {/* 음주 기록 추가 버튼: 오른쪽 */}
+          <div className="ml-auto">
+            <button
+              onClick={handleAddTodayLog}
+              className="text-white px-4 py-2 rounded-lg transition cursor-pointer"
+              style={{ backgroundColor: `${TITLE_COLOR}` }}
+            >
+              음주 기록 추가
+            </button>
+          </div>
         </div>
+
         <CalendarHeader
           currentMonth={currentMonth}
           onPrev={() => { if (!isPrevMonthDisabled) setCurrentMonth((prev: Date) => subMonths(prev, 1)); }}
@@ -123,6 +150,7 @@ export default function CalendarView(props: any) {
           isPrevDisabled={isPrevMonthDisabled}
           isNextDisabled={isNextMonthDisabled}
         />
+        
         <YearMonthPicker
           open={showMonthPicker}
           onClose={() => setShowMonthPicker(false)}
@@ -157,9 +185,10 @@ export default function CalendarView(props: any) {
           >
             <div className="flex items-center justify-between mb-2 min-w-[220px] w-[340px] px-4">
               <button
-                onClick={() => moveModalDate(-1)}
-                className="p-2 text-lg text-gray-600 hover:text-blue-600"
+                onClick={() => !isPrevDateDisabled && moveModalDate(-1)}
+                className={`p-2 text-lg ${isPrevDateDisabled ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:text-blue-600"}`}
                 aria-label="이전 날"
+                disabled={isPrevDateDisabled}
               >
                 &#8592;
               </button>
@@ -167,14 +196,10 @@ export default function CalendarView(props: any) {
                 {format(selectedDate, "yyyy년 MM월 dd일")} 음주 기록
               </h3>
               <button
-                onClick={() => moveModalDate(1)}
-                className={`p-2 text-lg ${
-                  format(selectedDate, "yyyy-MM-dd") === format(today, "yyyy-MM-dd")
-                    ? "text-gray-300 cursor-not-allowed"
-                    : "text-gray-600 hover:text-blue-600"
-                }`}
+                onClick={() => !isNextDateDisabled && moveModalDate(1)}
+                className={`p-2 text-lg ${isNextDateDisabled ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:text-blue-600"}`}
                 aria-label="다음 날"
-                disabled={format(selectedDate, "yyyy-MM-dd") === format(today, "yyyy-MM-dd")}
+                disabled={isNextDateDisabled}
               >
                 &#8594;
               </button>

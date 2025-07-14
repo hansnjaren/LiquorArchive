@@ -1,5 +1,5 @@
-import { CARD_COLOR, TAB_LIST_COLOR, userId } from "../constants";
-import purchases from "../data/purchase.json";
+import { CARD_COLOR, TAB_LIST_COLOR } from "../constants";
+import type { Bottle, Purchase } from "../types";
 
 const PLACEHOLDER_IMAGE = "/noImage.png";
 
@@ -12,7 +12,15 @@ function formatDateKorean(dateStr: string): string {
   return `${yyyy}년 ${mm}월 ${dd}일`;
 }
 
-export function BottleCard({ bottle }: { bottle: any }) {
+export function BottleCard({
+  bottle,
+  purchases,
+  userId,
+}: {
+  bottle: Bottle;
+  purchases: Purchase[];
+  userId: string;
+}) {
   // 총 구매 병수
   const totalQuantity = purchases
     .filter((p) => p.userId === userId && p.bottleId === bottle.id)
@@ -46,15 +54,6 @@ export function BottleCard({ bottle }: { bottle: any }) {
       </div>
       <div>
         <span className="font-semibold">국가:</span> {bottle.country ?? "-"}
-      </div>
-      <div>
-        <span className="font-semibold">용량:</span> {bottle.volumeMl}ml
-      </div>
-      <div>
-        <span className="font-semibold">도수:</span>{" "}
-        {bottle.abv !== null && bottle.abv !== undefined
-          ? bottle.abv.toFixed(1) + "%"
-          : "-"}
       </div>
       <div>
         <span className="font-semibold">내 구매 병수:</span>{" "}

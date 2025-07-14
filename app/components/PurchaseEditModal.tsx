@@ -29,18 +29,16 @@ interface Props {
 export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit }: Props) {
   useLockBodyScroll(true);
 
-  // 병 드롭다운 검색/선택 상태
   const initialBottle = bottles.find(b => b.id === purchase.bottleId);
   const [bottleSearch, setBottleSearch] = useState(initialBottle?.name ?? "");
-  const [selectedBottleId, setSelectedBottleId] = useState<string | null>(purchase.bottleId);
-  const [bottleDropdownOpen, setBottleDropdownOpen] = useState(false);
+  const [selectedBottleId] = useState<string | null>(purchase.bottleId); // bottleId는 수정 불가
+  const [bottleDropdownOpen] = useState(false);
 
   const [price, setPrice] = useState(String(purchase.price));
   const [place, setPlace] = useState(purchase.place ?? "");
   const [memo, setMemo] = useState(purchase.memo ?? "");
   const [quantity, setQuantity] = useState(String(purchase.quantity));
 
-  // 날짜/시간 input 분리
   const purchaseDateObj = new Date(purchase.purchaseDate);
   const [date, setDate] = useState(getLocalDateString(purchaseDateObj));
   const [time, setTime] = useState(getLocalTimeString(purchaseDateObj));
@@ -48,7 +46,6 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
   const [priceError, setPriceError] = useState("");
   const [quantityError, setQuantityError] = useState("");
 
-  // 오늘 날짜와 현재 시각 (로컬)
   const now = new Date();
   const todayStr = getLocalDateString(now);
   const maxTime =
@@ -57,11 +54,9 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
       : undefined;
   const maxDate = todayStr;
 
-  // 드래그 UX 개선
   const modalRef = useRef<HTMLDivElement>(null);
   const [dragStartedInside, setDragStartedInside] = useState(false);
 
-  // --- 애니메이션 관련 추가 부분 ---
   const [closing, setClosing] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
 
@@ -81,7 +76,6 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
       el.removeEventListener("animationend", handleAnimationEnd);
     };
   }, [closing, onClose]);
-  // --- 끝 ---
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (modalRef.current && modalRef.current.contains(e.target as Node)) {
@@ -119,12 +113,6 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
     setQuantityError(validateQuantity(e.target.value));
   };
 
-  const handleBottleSelect = (id: string, name: string) => {
-    setSelectedBottleId(id);
-    setBottleSearch(name);
-    setBottleDropdownOpen(false);
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const priceErr = validatePrice(price);
@@ -138,7 +126,6 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
     }
     if (priceErr || quantityErr) return;
 
-    // 날짜+시간을 합쳐서 Date 객체 생성 (로컬 타임존 기준)
     const newDateObj = new Date(`${date}T${time}`);
     if (newDateObj.getTime() > Date.now()) {
       alert("미래 시각의 구매 내역은 수정할 수 없습니다.");
@@ -146,17 +133,14 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
     }
     const fullDate = newDateObj.toISOString();
 
-    const updatedPurchase: Purchase = {
+    onSubmit({
       ...purchase,
-      bottleId: selectedBottleId,
       purchaseDate: fullDate,
       price: Number(price),
-      place: place || null,
-      memo: memo || null,
+      place: place || undefined,
+      memo: memo || undefined,
       quantity: Number(quantity),
-    };
-
-    onSubmit(updatedPurchase);
+    });
   };
 
   return (
@@ -182,25 +166,12 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
         </button>
         <h3 className="text-xl font-bold mb-4 text-center">구매 내역 수정</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 병 선택 (검색 드롭다운) */}
           <div>
             <label className="block text-sm font-semibold mb-1">
               병 이름
             </label>
-            {/* <BottleDropdown
-              bottles={bottles}
-              search={bottleSearch}
-              setSearch={setBottleSearch}
-              selectedBottleId={selectedBottleId}
-              setSelectedBottleId={handleBottleSelect}
-              open={bottleDropdownOpen}
-              setOpen={setBottleDropdownOpen}
-              
-            /> */}
-            
             <div className="w-full border rounded px-3 py-2">{initialBottle?.name}</div>
           </div>
-          {/* 날짜/시간 분리 */}
           <div>
             <label className="block text-sm font-semibold mb-1">
               구매일(날짜)
@@ -227,7 +198,6 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
               max={maxTime}
             />
           </div>
-          {/* 가격 */}
           <div>
             <label className="block text-sm font-semibold mb-1">가격(원)</label>
             <input
@@ -244,7 +214,6 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
               <div className="text-xs text-red-500 mt-1">{priceError}</div>
             )}
           </div>
-          {/* 장소 */}
           <div>
             <label className="block text-sm font-semibold mb-1">
               장소(선택)
@@ -256,7 +225,6 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
               onChange={e => setPlace(e.target.value)}
             />
           </div>
-          {/* 메모 */}
           <div>
             <label className="block text-sm font-semibold mb-1">
               메모(선택)
@@ -268,7 +236,6 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
               onChange={e => setMemo(e.target.value)}
             />
           </div>
-          {/* 병 수 */}
           <div>
             <label className="block text-sm font-semibold mb-1">병 수</label>
             <input

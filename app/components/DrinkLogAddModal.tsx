@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import { TITLE_COLOR } from "../constants";
 import { DrinkType } from "../types";
+import { DrinkTypeDropdown } from "./DrinkTypeDropdown";
 
 interface DrinkLogAddModalProps {
   defaultDate?: Date;
@@ -43,8 +44,10 @@ export default function DrinkLogAddModal({
   const [feelingScore, setFeelingScore] = useState("3");
   const [note, setNote] = useState("");
 
-  // 여러 술 입력용 상태
-  const [drinks, setDrinks] = useState([{ bottleId: "", count: "" }]);
+  // 여러 술 입력용 상태 (검색어, 드롭다운 오픈 상태 포함)
+  const [drinks, setDrinks] = useState([
+    { bottleId: "", count: "", search: "", dropdownOpen: false }
+  ]);
 
   // 모달 등 기타 상태
   const [closing, setClosing] = useState(false);
@@ -88,7 +91,7 @@ export default function DrinkLogAddModal({
   };
 
   // drinks 입력 변경 핸들러
-  const handleDrinkChange = (idx: number, key: "bottleId" | "count", value: string) => {
+  const handleDrinkChange = (idx: number, key: "bottleId" | "count" | "search" | "dropdownOpen", value: string | boolean) => {
     setDrinks(prev => {
       const next = [...prev];
       next[idx] = { ...next[idx], [key]: value };
@@ -97,9 +100,8 @@ export default function DrinkLogAddModal({
         next[next.length - 1].bottleId &&
         next[next.length - 1].count
       ) {
-        next.push({ bottleId: "", count: "" });
+        next.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
       }
-      // 마지막 한 칸만 빈 칸이 되도록 정리
       while (
         next.length > 1 &&
         !next[next.length - 1].bottleId &&
@@ -121,7 +123,7 @@ export default function DrinkLogAddModal({
         next.length === 0 ||
         (next[next.length - 1].bottleId && next[next.length - 1].count)
       ) {
-        next.push({ bottleId: "", count: "" });
+        next.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
       }
       return next;
     });
@@ -187,7 +189,7 @@ export default function DrinkLogAddModal({
       const result = await res.json();
       alert("추가된 음주 기록 정보:\n" + JSON.stringify(result, null, 2));
       onAdd(result);
-      setDrinks([{ bottleId: "", count: "" }]);
+      setDrinks([{ bottleId: "", count: "", search: "", dropdownOpen: false }]);
       setNote("");
       setLocationName("");
       setLocationLat("");
@@ -253,19 +255,20 @@ export default function DrinkLogAddModal({
             <label className="block text-sm font-semibold mb-1">술 종류 및 개수</label>
             {drinks.map((drink, idx) => (
               <div key={idx} className="flex items-end gap-2 mb-2">
-                <select
-                  className="border rounded px-2 py-1 flex-1"
-                  value={drink.bottleId}
-                  onChange={e => handleDrinkChange(idx, "bottleId", e.target.value)}
-                  required={idx === 0}
-                >
-                  <option value="" disabled>술 종류</option>
-                  {bottles.map(bottle => (
-                    <option key={bottle.id} value={bottle.id}>
-                      {bottle.name} {bottle.abv ? `(${bottle.abv}%)` : ""}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex-1">
+                  <DrinkTypeDropdown
+                    bottles={bottles}
+                    value={drink.bottleId}
+                    search={drink.search}
+                    setSearch={v => handleDrinkChange(idx, "search", v)}
+                    onSelect={(id, name) => {
+                      handleDrinkChange(idx, "bottleId", id);
+                      handleDrinkChange(idx, "search", name);
+                    }}
+                    open={drink.dropdownOpen}
+                    setOpen={v => handleDrinkChange(idx, "dropdownOpen", v)}
+                  />
+                </div>
                 <input
                   type="number"
                   min={1}
@@ -293,7 +296,7 @@ export default function DrinkLogAddModal({
                   }
                 </span>
                 {/* 삭제 버튼: 마지막 행이 아닐 때만 노출 */}
-                {drinks.length > 1 && idx !== drinks.length - 1 && (
+                {drinks.length > 1 && idx !== drinks.length - 1 ? (
                   <button
                     type="button"
                     className="ml-1 text-red-400 text-xs"
@@ -301,6 +304,8 @@ export default function DrinkLogAddModal({
                   >
                     삭제
                   </button>
+                ) : (
+                  <span className="ml-1 text-xs inline-block w-8" />
                 )}
               </div>
             ))}

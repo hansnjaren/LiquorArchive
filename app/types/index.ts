@@ -1,8 +1,10 @@
 export interface Bottle {
   id: string;
   name: string;
+  country?: string;
   category: string;
   imageUrl?: string | undefined | null;
+  memo?: string | undefined | null;
 }
 
 export interface Purchase {
