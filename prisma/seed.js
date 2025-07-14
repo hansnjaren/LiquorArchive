@@ -1,4 +1,5 @@
 // prisma/seed.ts
+
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
@@ -253,6 +254,54 @@ async function main() {
         volumeMl: 700,
         abv: 17.0,
         imageUrl: null,
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  await prisma.drinkType.createMany({
+    data: [
+      {
+        name: "일반 소주",
+        standardMl: 360,
+        abv: 16.0,
+        caloriesKcal: null,
+        iconUrl: null,
+      },
+      {
+        name: "독한 소주",
+        standardMl: 360,
+        abv: 20.0,
+        caloriesKcal: null,
+        iconUrl: null,
+      },
+      {
+        name: "맥주 캔",
+        standardMl: 500,
+        abv: 5.0,
+        caloriesKcal: null,
+        iconUrl: null,
+      },
+      {
+        name: "와인",
+        standardMl: 750,
+        abv: 13.0,
+        caloriesKcal: null,
+        iconUrl: null,
+      },
+      {
+        name: "막걸리",
+        standardMl: 750,
+        abv: 6.5,
+        caloriesKcal: null,
+        iconUrl: null,
+      },
+      {
+        name: "양주",
+        standardMl: 700,
+        abv: 40.0,
+        caloriesKcal: null,
+        iconUrl: null,
       },
     ],
     skipDuplicates: true,
