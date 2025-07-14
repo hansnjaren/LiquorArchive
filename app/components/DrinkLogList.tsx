@@ -1,21 +1,54 @@
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { DrinkLog } from "../types";
 
 export default function DrinkLogList({
-  logs,
-  getBottleName,
+  selectedDateStr,
   onEdit,
   onDelete,
 }: {
-  logs: any[];
-  getBottleName: (bottleId: string) => string;
-  onEdit: (log: any) => void;
+  selectedDateStr: string | null;
+  onEdit: (log: DrinkLog) => void;
   onDelete: (id: string) => void;
 }) {
-  return logs.length === 0 ? (
-    <div className="text-gray-500 text-center">음주 기록이 없습니다.</div>
-  ) : (
+  const [logs, setLogs] = useState<DrinkLog[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/drinkingLogs/me")
+      .then(res => {
+        if (!res.ok) throw new Error("로그인을 해주세요.");
+        return res.json();
+      })
+      .then(data => {
+        setLogs(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message || "불러오기 실패");
+        setLoading(false);
+      });
+  }, []);
+
+  // 날짜 필터링
+  const filteredLogs =
+    logs && selectedDateStr
+      ? logs.filter(
+          (log) =>
+            format(new Date(log.date), "yyyy-MM-dd") === selectedDateStr
+        )
+      : [];
+
+  if (loading) return <div className="text-gray-500 text-center">불러오는 중...</div>;
+  if (error) return <div className="text-red-500 text-center">{error}</div>;
+  if (!filteredLogs || filteredLogs.length === 0)
+    return <div className="text-gray-500 text-center">음주 기록이 없습니다.</div>;
+
+  return (
     <ul className="space-y-2 mt-2">
-      {logs.map((log) => (
+      {filteredLogs.map((log) => (
         <li
           key={log.id}
           className="border rounded p-2 bg-gray-50 flex flex-col gap-1 group relative"
@@ -28,17 +61,22 @@ export default function DrinkLogList({
             >
               <span className="font-semibold">{format(new Date(log.date), "HH시 mm분")}</span>
               {" · "}
-              <span>{getBottleName(log.bottleId)}</span>
-              {" · "}
-              <span>{log.amountMl}ml</span>
+              {log.drinks && log.drinks.length > 0 ? (
+                log.drinks.map((drink, i) => (
+                  <span key={drink.drinkTypeId + i}>
+                    {drink.drinkType?.name || "-"} {drink.amountMl}ml
+                    {i < log.drinks.length - 1 && ", "}
+                  </span>
+                ))
+              ) : (
+                <span>-</span>
+              )}
             </div>
             <button
               className="ml-2 text-red-500 hover:text-red-700 text-lg font-bold px-2"
               title="삭제"
               onClick={() => {
-                if (
-                  window.confirm("정말 삭제하시겠습니까?")
-                ) {
+                if (window.confirm("정말 삭제하시겠습니까?")) {
                   onDelete(log.id);
                 }
               }}

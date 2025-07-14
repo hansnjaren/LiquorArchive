@@ -1,17 +1,11 @@
 import { useRef, useState, useEffect } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import { TITLE_COLOR } from "../constants";
-
-interface DrinkType {
-  id: string;
-  name: string;
-  abv: number;
-  standardMl: number;
-  iconUrl?: string | null;
-}
+import { DrinkType } from "../types";
 
 interface DrinkLogAddModalProps {
   defaultDate?: Date;
+  bottles: DrinkType[];
   onAdd: (log: any) => void;
   onClose: () => void;
   userId: string;
@@ -27,7 +21,6 @@ function getLocalDateString(date = new Date()) {
     pad(date.getDate())
   );
 }
-
 function getLocalTimeString(date = new Date()) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -35,74 +28,45 @@ function getLocalTimeString(date = new Date()) {
 
 export default function DrinkLogAddModal({
   defaultDate = new Date(),
+  bottles,
   onAdd,
   onClose,
   userId,
 }: DrinkLogAddModalProps) {
   useLockBodyScroll(true);
 
-  // 기존 상태
   const [date, setDate] = useState(() => getLocalDateString(defaultDate));
   const [time, setTime] = useState(() => getLocalTimeString(defaultDate));
-  const [selectedBottleId, setSelectedBottleId] = useState<string | null>(null);
-  const [drinkCount, setDrinkCount] = useState(""); // 병/캔 개수
-
-  // 추가 상태
   const [locationName, setLocationName] = useState("");
   const [locationLat, setLocationLat] = useState("");
   const [locationLng, setLocationLng] = useState("");
-  const [feelingScore, setFeelingScore] = useState("3"); // 1~5, 기본 3
+  const [feelingScore, setFeelingScore] = useState("3");
   const [note, setNote] = useState("");
 
-  // 주종 목록
-  const [drinkTypes, setDrinkTypes] = useState<DrinkType[]>([]);
-  const [loadingDrinks, setLoadingDrinks] = useState(true);
+  // 여러 술 입력용 상태
+  const [drinks, setDrinks] = useState([{ bottleId: "", count: "" }]);
 
-  // 애니메이션 상태
+  // 모달 등 기타 상태
   const [closing, setClosing] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
-
-  // 드래그 UX
   const modalRef = useRef<HTMLDivElement>(null);
   const [dragStartedInside, setDragStartedInside] = useState(false);
 
-  // 오늘 날짜와 현재 시각
+  // 날짜/시간 제한
   const now = new Date();
   const todayStr = getLocalDateString(now);
-  const maxTime =
-    date === todayStr
-      ? getLocalTimeString(now)
-      : undefined;
+  const maxTime = date === todayStr ? getLocalTimeString(now) : undefined;
   const maxDate = todayStr;
 
-  // 주종 목록 불러오기
-  useEffect(() => {
-    setLoadingDrinks(true);
-    fetch("/api/drinkTypes")
-      .then(res => res.json())
-      .then(data => {
-        setDrinkTypes(data);
-        setLoadingDrinks(false);
-      })
-      .catch(() => setLoadingDrinks(false));
-  }, []);
-
-  // 닫기 요청 → 애니메이션
-  const handleRequestClose = () => {
-    setClosing(true);
-  };
+  const handleRequestClose = () => setClosing(true);
 
   useEffect(() => {
     if (!closing) return;
     const el = backdropRef.current;
     if (!el) return;
-    const handleAnimationEnd = () => {
-      onClose();
-    };
+    const handleAnimationEnd = () => onClose();
     el.addEventListener("animationend", handleAnimationEnd);
-    return () => {
-      el.removeEventListener("animationend", handleAnimationEnd);
-    };
+    return () => el.removeEventListener("animationend", handleAnimationEnd);
   }, [closing, onClose]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -123,23 +87,68 @@ export default function DrinkLogAddModal({
     }
   };
 
+  // drinks 입력 변경 핸들러
+  const handleDrinkChange = (idx: number, key: "bottleId" | "count", value: string) => {
+    setDrinks(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [key]: value };
+      if (
+        next.length < 10 &&
+        next[next.length - 1].bottleId &&
+        next[next.length - 1].count
+      ) {
+        next.push({ bottleId: "", count: "" });
+      }
+      // 마지막 한 칸만 빈 칸이 되도록 정리
+      while (
+        next.length > 1 &&
+        !next[next.length - 1].bottleId &&
+        !next[next.length - 1].count &&
+        !next[next.length - 2].bottleId &&
+        !next[next.length - 2].count
+      ) {
+        next.pop();
+      }
+      return next;
+    });
+  };
+
+  // 입력행 삭제
+  const handleRemoveDrink = (idx: number) => {
+    setDrinks(prev => {
+      let next = prev.filter((_, i) => i !== idx);
+      if (
+        next.length === 0 ||
+        (next[next.length - 1].bottleId && next[next.length - 1].count)
+      ) {
+        next.push({ bottleId: "", count: "" });
+      }
+      return next;
+    });
+  };
+
+  // 제출
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 방어 코드: 값 체크
-    if (!selectedBottleId) {
-      alert("술 종류를 선택하세요.");
+    const validDrinks = drinks
+      .filter(d => d.bottleId && d.count && !isNaN(Number(d.count)) && Number(d.count) > 0)
+      .map(d => {
+        const bottle = bottles.find(b => b.id === d.bottleId);
+        return bottle
+          ? {
+              drinkTypeId: bottle.id,
+              amountMl: Number(d.count) * Number(bottle.standardMl),
+            }
+          : null;
+      })
+      .filter(Boolean);
+
+    if (validDrinks.length === 0) {
+      alert("술 종류와 개수를 1개 이상 입력하세요.");
       return;
     }
-    if (!drinkCount || isNaN(Number(drinkCount)) || Number(drinkCount) < 1) {
-      alert("병/캔 개수를 1개 이상 입력하세요.");
-      return;
-    }
-    const bottle = drinkTypes.find((b) => b.id === selectedBottleId);
-    if (!bottle || !bottle.standardMl || isNaN(Number(bottle.standardMl))) {
-      alert("올바른 술 정보를 선택하세요.");
-      return;
-    }
+
     const logDate = new Date(`${date}T${time}`);
     if (logDate.getTime() > Date.now()) {
       alert("미래 시각의 기록은 추가할 수 없습니다.");
@@ -147,14 +156,6 @@ export default function DrinkLogAddModal({
     }
     if (!feelingScore) {
       alert("기분 점수를 입력하세요.");
-      return;
-    }
-
-    // 병/캔 개수 × standardMl로 변환 (항상 number)
-    const amountMl = Number(drinkCount) * Number(bottle.standardMl);
-
-    if (!amountMl || isNaN(amountMl) || amountMl < 1) {
-      alert("음료 용량 계산에 실패했습니다. 입력값을 확인하세요.");
       return;
     }
 
@@ -169,21 +170,29 @@ export default function DrinkLogAddModal({
           locationLng: locationLng ? Number(locationLng) : undefined,
           feelingScore: Number(feelingScore),
           note: note || undefined,
-          drinks: [
-            { drinkTypeId: bottle.id, amountMl }
-          ]
+          drinks: validDrinks,
         }),
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        alert("에러: " + (err.message ?? res.status));
+        let errMsg = "에러: " + res.status;
+        try {
+          const err = await res.json();
+          errMsg = "에러: " + (err.message ?? res.status);
+        } catch {}
+        alert(errMsg);
         return;
       }
 
       const result = await res.json();
-      // alert("추가된 음주 기록 정보:\n" + JSON.stringify(result, null, 2));
+      alert("추가된 음주 기록 정보:\n" + JSON.stringify(result, null, 2));
       onAdd(result);
+      setDrinks([{ bottleId: "", count: "" }]);
+      setNote("");
+      setLocationName("");
+      setLocationLat("");
+      setLocationLng("");
+      setFeelingScore("3");
       handleRequestClose();
     } catch (err) {
       alert("서버 오류: " + (err as any).toString());
@@ -201,8 +210,8 @@ export default function DrinkLogAddModal({
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-lg shadow-lg max-w-xs w-full p-6 relative"
-        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative overflow-y-auto max-h-[80vh]"
+        onClick={e => e.stopPropagation()}
       >
         <button
           onClick={handleRequestClose}
@@ -239,61 +248,62 @@ export default function DrinkLogAddModal({
               max={maxTime}
             />
           </div>
-          {/* 술 종류 선택 */}
+          {/* 여러 술 입력란 */}
           <div>
-            <label className="block text-sm font-semibold mb-1">술 종류</label>
-            {loadingDrinks ? (
-              <div className="text-gray-400 text-sm">불러오는 중...</div>
-            ) : (
-              <select
-                className="w-full border rounded px-3 py-2"
-                value={selectedBottleId || ""}
-                onChange={e => setSelectedBottleId(e.target.value)}
-                required
-              >
-                <option value="" disabled>
-                  선택하세요
-                </option>
-                {drinkTypes.map((drink) => (
-                  <option key={drink.id} value={drink.id}>
-                    {drink.name} {drink.abv ? `(${drink.abv}%)` : ""}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-          {/* 병/캔 개수 */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">
-              {selectedBottleId
-                ? `${drinkTypes.find((b) => b.id === selectedBottleId)?.name} 개수`
-                : "병/캔 개수"}
-            </label>
-            <input
-              type="number"
-              className="w-full border rounded px-3 py-2"
-              value={drinkCount}
-              onChange={e => setDrinkCount(e.target.value)}
-              min={1}
-              required
-              placeholder="몇 병/캔 마셨나요?"
-            />
-            {selectedBottleId && (() => {
-              const drink = drinkTypes.find((b) => b.id === selectedBottleId);
-              if (!drink) return <div className="text-xs text-gray-500 mt-1">선택된 주종 정보 없음</div>;
-              if (!drink.standardMl) return <div className="text-xs text-gray-500 mt-1">용량 정보 없음</div>;
-              const count = Number(drinkCount);
-              const isValid = !isNaN(count) && count > 0;
-              const totalMl = isValid ? count * Number(drink.standardMl) : null;
-              return (
-                <div className="text-xs text-gray-500 mt-1">
-                  1개 = {Number(drink.standardMl)}ml
-                  {isValid && (
-                    <> &nbsp;|&nbsp; {count}개 = {totalMl}ml</>
-                  )}
-                </div>
-              );
-            })()}
+            <label className="block text-sm font-semibold mb-1">술 종류 및 개수</label>
+            {drinks.map((drink, idx) => (
+              <div key={idx} className="flex items-end gap-2 mb-2">
+                <select
+                  className="border rounded px-2 py-1 flex-1"
+                  value={drink.bottleId}
+                  onChange={e => handleDrinkChange(idx, "bottleId", e.target.value)}
+                  required={idx === 0}
+                >
+                  <option value="" disabled>술 종류</option>
+                  {bottles.map(bottle => (
+                    <option key={bottle.id} value={bottle.id}>
+                      {bottle.name} {bottle.abv ? `(${bottle.abv}%)` : ""}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  className="border rounded px-2 py-1 w-20"
+                  value={drink.count}
+                  onChange={e => handleDrinkChange(idx, "count", e.target.value)}
+                  placeholder="개수"
+                  required={idx === 0}
+                />
+                <span className="text-xs text-gray-500 ml-1 min-w-[90px] inline-block">
+                  {drink.bottleId
+                    ? (() => {
+                        const bottle = bottles.find(b => b.id === drink.bottleId);
+                        const count = Number(drink.count);
+                        const isValid = !isNaN(count) && count > 0 && bottle;
+                        const totalMl = isValid ? count * Number(bottle!.standardMl) : null;
+                        return (
+                          <>
+                            1개={bottle ? bottle.standardMl : "-"}ml
+                            {isValid && <> | {count}개={totalMl}ml</>}
+                          </>
+                        );
+                      })()
+                    : "\u00A0"
+                  }
+                </span>
+                {/* 삭제 버튼: 마지막 행이 아닐 때만 노출 */}
+                {drinks.length > 1 && idx !== drinks.length - 1 && (
+                  <button
+                    type="button"
+                    className="ml-1 text-red-400 text-xs"
+                    onClick={() => handleRemoveDrink(idx)}
+                  >
+                    삭제
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
           {/* 장소명 */}
           <div>

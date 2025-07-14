@@ -17,3 +17,29 @@ export interface Purchase {
   updatedAt?: string;
   quantity: number;
 }
+
+export interface DrinkType {
+  id: string;
+  name: string;
+  abv: number;
+  standardMl: number;
+  iconUrl?: string | null;
+}
+
+export interface DrinkLogDrink {
+  drinkTypeId: string;
+  amountMl: number;
+  drinkType?: DrinkType;
+}
+
+export interface DrinkLog {
+  id: string;
+  userId: string;
+  date: string;
+  locationName?: string;
+  locationLat?: number;
+  locationLng?: number;
+  feelingScore?: number;
+  note?: string;
+  drinks: DrinkLogDrink[];
+}

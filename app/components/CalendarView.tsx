@@ -7,6 +7,7 @@ import DrinkLogAddModal from "./DrinkLogAddModal";
 import DrinkLogEditModal from "./DrinkLogEditModal";
 import { format, addMonths, subMonths } from "date-fns";
 import { TAB_LIST_COLOR, TITLE_COLOR } from "../constants";
+import { DrinkType } from "../types";
 
 export default function CalendarView(props: any) {
   const {
@@ -30,9 +31,6 @@ export default function CalendarView(props: any) {
     isNextMonthDisabled,
     monthStart,
     monthEnd,
-    userDrinkDates,
-    logsForSelectedDate,
-    getBottleName,
     handleAddLog,
     handleEditLog,
     handleDeleteLog,
@@ -40,15 +38,25 @@ export default function CalendarView(props: any) {
     handleAddModalLog,
     handleYearMonthSelect,
     moveModalDate,
-    bottles,
     userId,
   } = props;
 
-  // --- 날짜 모달 닫힘 애니메이션 상태 추가 ---
+  // 병(주종) 목록을 DB에서 fetch
+  const [bottles, setBottles] = useState<DrinkType[]>([]);
+  useEffect(() => {
+    fetch("/api/drinkTypes")
+      .then(res => {
+        if (!res.ok) throw new Error("주종 목록을 불러오지 못했습니다.");
+        return res.json();
+      })
+      .then(setBottles)
+      .catch(e => alert(e.message));
+  }, []);
+
+  // 날짜 모달 닫힘 애니메이션
   const [dateModalClosing, setDateModalClosing] = useState(false);
   const dateModalBackdropRef = useRef<HTMLDivElement>(null);
 
-  // 닫기 요청시 애니메이션 후 실제로 닫기
   const handleDateModalRequestClose = () => {
     setDateModalClosing(true);
   };
@@ -89,8 +97,11 @@ export default function CalendarView(props: any) {
     }
   };
 
+  // 선택한 날짜를 yyyy-MM-dd 문자열로 변환
+  const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+
   return (
-    <div 
+    <div
       className="max-w-md mx-auto p-4 mt-[15vh] rounded-2xl"
       style={{ backgroundColor: `${TAB_LIST_COLOR}` }}>
       {/* 상단: 버튼 우측정렬, 달력 컨트롤 */}
@@ -99,7 +110,7 @@ export default function CalendarView(props: any) {
           <button
             onClick={handleAddTodayLog}
             className="text-white px-4 py-2 rounded-lg transition cursor-pointer"
-            style={{backgroundColor: `${TITLE_COLOR}`}}
+            style={{ backgroundColor: `${TITLE_COLOR}` }}
           >
             음주 기록 추가
           </button>
@@ -126,7 +137,6 @@ export default function CalendarView(props: any) {
         monthStart={monthStart}
         monthEnd={monthEnd}
         today={today}
-        userDrinkDates={userDrinkDates}
         onDateClick={setSelectedDate}
         currentMonth={currentMonth}
       />
@@ -179,13 +189,12 @@ export default function CalendarView(props: any) {
             <button
               onClick={() => handleAddModalLog(selectedDate)}
               className="block mx-auto mb-2 text-white px-4 py-2 rounded transition cursor-pointer"
-              style={{backgroundColor: `${TITLE_COLOR}`}}
+              style={{ backgroundColor: `${TITLE_COLOR}` }}
             >
               음주 기록 추가
             </button>
             <DrinkLogList
-              logs={logsForSelectedDate}
-              getBottleName={getBottleName}
+              selectedDateStr={selectedDateStr}
               onEdit={setEditLog}
               onDelete={handleDeleteLog}
             />
@@ -196,6 +205,7 @@ export default function CalendarView(props: any) {
       {showAddLogModal && addLogDate && (
         <DrinkLogAddModal
           defaultDate={addLogDate}
+          bottles={bottles}
           onAdd={handleAddLog}
           onClose={() => setShowAddLogModal(false)}
           userId={userId}
@@ -204,9 +214,9 @@ export default function CalendarView(props: any) {
       {editLog && (
         <DrinkLogEditModal
           log={editLog}
-          onEdit={handleEditLog}
+          bottles={bottles}
+          onSubmit={handleEditLog}
           onClose={() => setEditLog(null)}
-          userId={userId}
         />
       )}
     </div>
