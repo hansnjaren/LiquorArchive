@@ -26,3 +26,11 @@ export type PurchaseCollectionItem = {
   bottleId: string;
   quantity: number;
 };
+
+export type UpdatePurchaseBody = {
+  purchaseDate?: string;
+  quantity?: number;
+  price?: number;
+  place?: string;
+  memo?: string;
+};

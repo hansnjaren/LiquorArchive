@@ -1,6 +1,8 @@
 // repositories/purchase.repository.ts
 
 import { db } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { UpdatePurchaseBody } from "@/types/purchase.types";
 
 export type ParsedPurchaseData = {
   bottleId: string;
@@ -59,6 +61,33 @@ export async function getPurchaseCollectionByUser(userId: string) {
       _sum: {
         quantity: "desc", // 혹은 최신순 정렬은 이후에 고려
       },
+    },
+  });
+}
+
+export async function updatePurchaseById(
+  purchaseId: string,
+  userId: string,
+  updateData: Omit<UpdatePurchaseBody, "bottleId">
+) {
+  // 1️⃣ 존재 + 본인 소유 여부 확인
+  const existing = await db.purchase.findUnique({
+    where: { id: purchaseId },
+    select: { userId: true },
+  });
+
+  if (!existing || existing.userId !== userId) {
+    throw new Error("Purchase not found or access denied");
+  }
+
+  // 2️⃣ 실제 수정
+  return await db.purchase.update({
+    where: { id: purchaseId },
+    data: {
+      ...updateData,
+      purchaseDate: updateData.purchaseDate
+        ? new Date(updateData.purchaseDate)
+        : undefined,
     },
   });
 }
