@@ -43,7 +43,7 @@
  *             schema:
  *               type: array
  *               items:
- *                 $ref: "#/schema/Bottle"
+ *                 $ref: "#/schemas/Bottle"
  *       500:
  *         description: 서버 오류
  */
@@ -57,8 +57,8 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get("q") ?? undefined;
   const category = searchParams.get("category") ?? undefined;
   const skip = Number(searchParams.get("skip") ?? 0);
-  const takeRaw = Number(searchParams.get("take") ?? 8);
-  const take = Math.min(Math.max(takeRaw, 1), 32); // 1~32 제한
+  const takeRaw = Number(searchParams.get("take") ?? 999);
+  const take = Math.min(Math.max(takeRaw, 1), 999); // 1~32 제한
 
   try {
     const bottles = await getBottlesBySearch({ q, category, skip, take });

@@ -52,8 +52,8 @@ export async function GET(req: NextRequest) {
 
   const category = searchParams.get("category");
   const skip = Number(searchParams.get("skip") ?? 0);
-  const takeRaw = Number(searchParams.get("take") ?? 20);
-  const take = Math.min(Math.max(takeRaw, 1), 32); // 1~32 제한
+  const takeRaw = Number(searchParams.get("take") ?? 999);
+  const take = Math.min(Math.max(takeRaw, 1), 999); // 1~32 제한
 
   if (!category) {
     return NextResponse.json(

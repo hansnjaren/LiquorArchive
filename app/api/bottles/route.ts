@@ -40,8 +40,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
   const skip = Number(searchParams.get("skip") ?? 0);
-  const takeRaw = Number(searchParams.get("take") ?? 20);
-  const take = Math.min(Math.max(takeRaw, 1), 32);
+  const takeRaw = Number(searchParams.get("take") ?? 999);
+  const take = Math.min(Math.max(takeRaw, 1), 999);
 
   try {
     const bottles = await getAllBottles({ skip, take });
