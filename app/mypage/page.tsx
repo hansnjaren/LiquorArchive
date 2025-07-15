@@ -14,7 +14,6 @@ import {
   Legend,
   Filler,
 } from "chart.js";
-
 import YearMonthPicker from "../components/YearMonthPicker";
 import CalendarHeader from "../components/CalendarHeader";
 import SummaryCard from "../components/SummaryCard";
@@ -64,6 +63,10 @@ type ServerStats = {
   dailyAlcoholGram?: DailyAlcohol[];
   daysInMonth: number;
 };
+type ProfileStats = {
+  totalPurchaseCount: number;
+  totalDrinkingDays: number;
+};
 
 export default function MyPage() {
   const today = new Date();
@@ -77,12 +80,35 @@ export default function MyPage() {
   const [error, setError] = useState("");
   const [editOpen, setEditOpen] = useState(false);
 
+  // 기록 데이터 fetch (달력범위 제한)
   const [logs, setLogs] = useState<DrinkLog[]>([]);
   useEffect(() => {
     fetch("/api/drinkingLogs/me", { credentials: "include" })
       .then((res) => res.json())
       .then(setLogs)
       .catch(() => setLogs([]));
+  }, []);
+
+  // 프로필 통계 fetch 및 State
+  const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
+  const fetchProfileStats = async () => {
+    try {
+      const res = await fetch("/api/profileStats", {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "프로필 통계를 불러오는 중 오류 발생");
+      }
+      const data = await res.json();
+      setProfileStats(data);
+    } catch (err) {
+      console.error("fetchProfileStats error:", err);
+      setProfileStats(null);
+    }
+  };
+  useEffect(() => {
+    fetchProfileStats();
   }, []);
 
   const { years, monthsByYear, minYear, minMonth } = useYearMonthOptions(
@@ -172,49 +198,47 @@ export default function MyPage() {
 
   return (
     <div className="max-w-xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-4">마이페이지</h2>{" "}
+      <h2 className="text-2xl font-bold mb-4">마이페이지</h2>
       <div className="flex items-center gap-4 mb-6">
-        {" "}
         <img
           src={session?.user?.image ?? "/noImage.png"}
           alt={session?.user?.name ?? "프로필"}
           className="w-20 h-20 rounded-full object-cover border"
-        />{" "}
+        />
         <div>
-          {" "}
           <div className="text-lg font-bold">
             {session?.user?.name ?? "알 수 없음"}
-          </div>{" "}
+          </div>
           <div className="text-gray-600">
             {session?.user?.email ?? "이메일 미등록"}
-          </div>{" "}
-        </div>{" "}
-      </div>{" "}
+          </div>
+        </div>
+      </div>
       <div className="flex w-full items-center mb-4">
-        {" "}
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded"
           onClick={() => setEditOpen(true)}
         >
-          회원정보 수정{" "}
-        </button>{" "}
+          회원정보 수정
+        </button>
         <div className="ml-auto">
-          <AccountDeleteButton />{" "}
-        </div>{" "}
+          <AccountDeleteButton />
+        </div>
         {editOpen && (
           <UserEditModal
             onClose={() => setEditOpen(false)}
             onSuccess={() => {
               alert("수정 완료!");
               fetchStats();
+              fetchProfileStats();
             }}
           />
-        )}{" "}
-      </div>{" "}
+        )}
+      </div>
       <SummaryCard
-        totalQuantity={stats?.totalQuantity ?? 0}
-        totalSpent={stats?.totalSpent ?? 0}
-      />{" "}
+        totalPurchaseCount={profileStats?.totalPurchaseCount ?? 0}
+        totalDrinkingDays={profileStats?.totalDrinkingDays ?? 0}
+      />
       <div
         className="rounded-lg shadow p-4 mb-8"
         style={{ backgroundColor: TAB_LIST_COLOR }}
@@ -225,7 +249,6 @@ export default function MyPage() {
           (e.currentTarget.style.backgroundColor = TAB_LIST_COLOR)
         }
       >
-        {" "}
         <CalendarHeader
           currentMonth={currentMonth}
           onPrev={() => setCurrentMonth((prev) => subMonths(prev, 1))}
@@ -233,9 +256,8 @@ export default function MyPage() {
           onShowPicker={() => setShowMonthPicker(true)}
           isPrevDisabled={isPrevMonthDisabled}
           isNextDisabled={isNextMonthDisabled}
-        />{" "}
+        />
         <div className="mb-4">
-          {" "}
           <UnitSelect
             value={
               unit.name === BEER_UNIT.name
@@ -245,30 +267,28 @@ export default function MyPage() {
                 : "alcohol"
             }
             onChange={handleUnitChange}
-          />{" "}
-        </div>{" "}
+          />
+        </div>
         <div className="mb-4">
-          {" "}
           <div className="w-full h-[320px]">
-            {" "}
             <AlcoholCumulativeChart
               key={valuesByUnit.join(",")}
               labels={labels}
               dailyByUnit={valuesByUnit}
               unit={unit}
               loading={loading}
-            />{" "}
-          </div>{" "}
-        </div>{" "}
-        {error && <div className="py-12 text-center text-red-500">{error}</div>}{" "}
+            />
+          </div>
+        </div>
+        {error && <div className="py-12 text-center text-red-500">{error}</div>}
         <div className="text-right font-bold text-blue-700">
           이 달의 총 섭취량:{" "}
           {totalByUnit.toLocaleString(undefined, {
             maximumFractionDigits: 2,
           })}{" "}
-          {unit.label}{" "}
-        </div>{" "}
-      </div>{" "}
+          {unit.label}
+        </div>
+      </div>
       <YearMonthPicker
         open={showMonthPicker}
         onClose={() => setShowMonthPicker(false)}
@@ -277,7 +297,7 @@ export default function MyPage() {
         monthsByYear={monthsByYear}
         selectedYear={selectedYear}
         selectedMonth={selectedMonth}
-      />{" "}
+      />
     </div>
   );
 }
