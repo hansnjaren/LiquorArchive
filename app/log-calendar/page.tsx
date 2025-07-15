@@ -35,11 +35,22 @@ export default function CalendarContainer() {
   const [drinkTypes, setDrinkTypes] = useState<DrinkType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 추가/수정/삭제/모달 상태 등은 기존과 동일하게 선언
+  // 추가/수정/삭제/모달 상태
   const [showAddLogModal, setShowAddLogModal] = useState(false);
   const [addLogDate, setAddLogDate] = useState<Date | null>(null);
   const [editLog, setEditLog] = useState<DrinkLog | null>(null);
 
+  // ✅ logs fetch 함수 (재활용 가능하도록 정의)
+  const refetchDrinkLogs = async () => {
+    try {
+      const updatedLogs = await fetchDrinkLogs();
+      setLogs(updatedLogs);
+    } catch (err) {
+      alert("음주 기록을 다시 불러오지 못했습니다.");
+    }
+  };
+
+  // 초기 데이터 로드
   useEffect(() => {
     setLoading(true);
     Promise.all([fetchDrinkLogs(), fetchDrinkTypes()])
@@ -51,13 +62,11 @@ export default function CalendarContainer() {
       .finally(() => setLoading(false));
   }, []);
 
-  // 연/월 옵션 계산 (DB 데이터 기반)
   const { years, monthsByYear, minYear, minMonth } = useYearMonthOptions(logs, today);
 
   const selectedYear = currentMonth.getFullYear();
   const selectedMonth = currentMonth.getMonth() + 1;
 
-  // 월 이동 제한
   const isPrevMonthDisabled =
     selectedYear < minYear ||
     (selectedYear === minYear && selectedMonth <= minMonth);
@@ -66,16 +75,13 @@ export default function CalendarContainer() {
     selectedYear > today.getFullYear() ||
     (selectedYear === today.getFullYear() && selectedMonth >= today.getMonth() + 1);
 
-  // 달력 렌더링 준비
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
 
-  // 음주 기록이 있는 날짜 Set (yyyy-MM-dd)
   const userDrinkDates = new Set(
     logs.map((log) => format(new Date(log.date), "yyyy-MM-dd"))
   );
 
-  // 날짜별 음주 기록
   const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
   const logsForSelectedDate = selectedDate
     ? logs
@@ -83,17 +89,24 @@ export default function CalendarContainer() {
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     : [];
 
-  // 병 이름 찾기
+  // 🍶 병 이름 조회
   const getDrinkTypeName = (drinkTypeId: string) => {
     const drinkType = drinkTypes.find((d) => d.id === drinkTypeId);
     return drinkType ? drinkType.name : "-";
   };
 
-  // 모달 핸들러
-  const handleAddLog = (newLog: DrinkLog) => setLogs((prev) => [...prev, newLog]);
-  const handleEditLog = (updatedLog: DrinkLog) => setLogs((prev) => prev.map((log) => (log.id === updatedLog.id ? updatedLog : log)));
+  // ✅ 기록 추가 후 데이터 다시 불러오기
+  const handleAddLog = async (newLog: DrinkLog) => {
+    await refetchDrinkLogs();
+    setShowAddLogModal(false); // 모달 닫기
+  };
 
-  // === DB와 연동되는 삭제 함수 ===
+  // ✅ 기록 수정 후 데이터 다시 불러오기
+  const handleEditLog = async (updatedLog: DrinkLog) => {
+    await refetchDrinkLogs();
+    setEditLog(null); // 수정 모달 닫기
+  };
+
   const handleDeleteLog = async (id: string) => {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
     try {
@@ -111,18 +124,33 @@ export default function CalendarContainer() {
       alert("서버 오류: " + (err?.message ?? err));
     }
   };
-  // ============================
 
-  const handleAddTodayLog = () => { setAddLogDate(today); setShowAddLogModal(true); };
-  const handleAddModalLog = (date: Date) => { setAddLogDate(date); setShowAddLogModal(true); };
+  const handleAddTodayLog = () => {
+    setAddLogDate(today);
+    setShowAddLogModal(true);
+  };
 
-  // 연/월 모달에서 선택
+  const handleAddModalLog = (date: Date) => {
+    const now = new Date();
+    // 선택된 날짜의 년/월/일 + 현재 시/분/초로 새 Date 만들기
+    const newDateTime = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds()
+    );
+    setAddLogDate(newDateTime);
+    setShowAddLogModal(true);
+  };
+
   const handleYearMonthSelect = (year: number, month: number) => {
     setCurrentMonth(new Date(year, month - 1, 1));
     setShowMonthPicker(false);
   };
 
-  // 이전/다음 날짜로 이동
   const moveModalDate = (offset: number) => {
     if (!selectedDate) return;
     let newDate = new Date(selectedDate);

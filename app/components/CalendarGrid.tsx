@@ -26,6 +26,7 @@ export default function CalendarGrid({
       .then(res => res.json())
       .then((logs: DrinkLog[]) => {
         // 이번 달에 해당하는 기록만 날짜 Set으로 만듦
+        console.log("✅ logs:", logs);
         const monthStr = format(monthStart, "yyyy-MM");
         const dates = new Set(
           logs
