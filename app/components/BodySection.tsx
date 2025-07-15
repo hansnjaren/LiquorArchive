@@ -64,11 +64,12 @@ export function BodySection({
           style={{ backgroundColor: OVERLAY_BG_LIGHT }}
         >
           {loading ? (
-            <>
+            <div
+              className="flex mx-[5px] md:mx-0">
               <BlockSkeleton title="🗓️" />
               <BlockSkeleton title="🍾" />
               <BlockSkeleton title="🍻" />
-            </>
+            </div>
           ) : stats ? (
             <div
               className="flex mx-[5px] md:mx-0">

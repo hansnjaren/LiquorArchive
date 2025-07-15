@@ -89,17 +89,23 @@ export default function CalendarGrid({
     );
     days = [];
   }
-
   return (
     <>
       <div className="grid grid-cols-7 mb-2 text-center text-gray-500">
-        <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+        <div>일</div><div>월</div><div>화</div><div>수</div>
+        <div>목</div><div>금</div><div>토</div>
       </div>
       {loading ? (
-        <div className="text-center text-gray-400 py-8">불러오는 중...</div>
+        // 하나의 큰 네모 스켈레톤
+        <div
+          className="w-full h-[200px] bg-gray-300 rounded-2xl animate-pulse"
+          // h-[360px]: 6주 × (각 셀 높이: 10 + 여백)
+        ></div>
       ) : (
         <div>{rows}</div>
       )}
     </>
   );
+
+
 }

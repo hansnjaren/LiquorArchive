@@ -3,6 +3,7 @@ import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import { TITLE_COLOR } from "../constants";
 import { DrinkType } from "../types";
 import { DrinkTypeDropdown } from "./DrinkTypeDropdown";
+import LocationSelector from "./LocationSelector";
 
 interface DrinkLogAddModalProps {
   defaultDate?: Date;
@@ -43,19 +44,14 @@ export default function DrinkLogAddModal({
   const [locationLng, setLocationLng] = useState("");
   const [feelingScore, setFeelingScore] = useState("3");
   const [note, setNote] = useState("");
-
-  // 여러 술 입력용 상태 (검색어, 드롭다운 오픈 상태 포함)
   const [drinks, setDrinks] = useState([
     { bottleId: "", count: "", search: "", dropdownOpen: false }
   ]);
-
-  // 모달 등 기타 상태
   const [closing, setClosing] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const [dragStartedInside, setDragStartedInside] = useState(false);
 
-  // 날짜/시간 제한
   const now = new Date();
   const todayStr = getLocalDateString(now);
   const maxTime = date === todayStr ? getLocalTimeString(now) : undefined;
@@ -90,7 +86,6 @@ export default function DrinkLogAddModal({
     }
   };
 
-  // drinks 입력 변경 핸들러
   const handleDrinkChange = (idx: number, key: "bottleId" | "count" | "search" | "dropdownOpen", value: string | boolean) => {
     setDrinks(prev => {
       const next = [...prev];
@@ -115,7 +110,6 @@ export default function DrinkLogAddModal({
     });
   };
 
-  // 입력행 삭제
   const handleRemoveDrink = (idx: number) => {
     setDrinks(prev => {
       let next = prev.filter((_, i) => i !== idx);
@@ -129,7 +123,6 @@ export default function DrinkLogAddModal({
     });
   };
 
-  // 제출
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -187,7 +180,6 @@ export default function DrinkLogAddModal({
       }
 
       const result = await res.json();
-      alert("추가된 음주 기록 정보:\n" + JSON.stringify(result, null, 2));
       onAdd(result);
       setDrinks([{ bottleId: "", count: "", search: "", dropdownOpen: false }]);
       setNote("");
@@ -212,174 +204,174 @@ export default function DrinkLogAddModal({
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative overflow-y-auto max-h-[80vh]"
-        onClick={e => e.stopPropagation()}
+        className="bg-white rounded-lg shadow-lg max-w-md w-full p-0"
+        style={{ overflow: "hidden" }}
       >
-        <button
-          onClick={handleRequestClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl"
-          aria-label="닫기"
+        <div
+          className="relative p-6 overflow-y-auto max-h-[80vh] rounded-lg"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "#d4d4d8 #fff" }}
+          onClick={e => e.stopPropagation()}
         >
-          ×
-        </button>
-        <h3 className="text-lg font-bold mb-4 text-center">
-          음주 기록 추가
-        </h3>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {/* 날짜 선택 */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">날짜</label>
-            <input
-              type="date"
-              className="w-full border rounded px-3 py-2"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              required
-              max={maxDate}
-            />
-          </div>
-          {/* 시간 선택 */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">시간</label>
-            <input
-              type="time"
-              className="w-full border rounded px-3 py-2"
-              value={time}
-              onChange={e => setTime(e.target.value)}
-              required
-              max={maxTime}
-            />
-          </div>
-          {/* 여러 술 입력란 */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">술 종류 및 개수</label>
-            {drinks.map((drink, idx) => (
-              <div key={idx} className="flex items-end gap-2 mb-2">
-                <div className="flex-1">
-                  <DrinkTypeDropdown
-                    bottles={bottles}
-                    value={drink.bottleId}
-                    search={drink.search}
-                    setSearch={v => handleDrinkChange(idx, "search", v)}
-                    onSelect={(id, name) => {
-                      handleDrinkChange(idx, "bottleId", id);
-                      handleDrinkChange(idx, "search", name);
-                    }}
-                    open={drink.dropdownOpen}
-                    setOpen={v => handleDrinkChange(idx, "dropdownOpen", v)}
-                  />
-                </div>
-                <input
-                  type="number"
-                  min={1}
-                  className="border rounded px-2 py-1 w-20"
-                  value={drink.count}
-                  onChange={e => handleDrinkChange(idx, "count", e.target.value)}
-                  placeholder="개수"
-                  required={idx === 0}
-                />
-                <span className="text-xs text-gray-500 ml-1 min-w-[90px] inline-block">
-                  {drink.bottleId
-                    ? (() => {
-                        const bottle = bottles.find(b => b.id === drink.bottleId);
-                        const count = Number(drink.count);
-                        const isValid = !isNaN(count) && count > 0 && bottle;
-                        const totalMl = isValid ? count * Number(bottle!.standardMl) : null;
-                        return (
-                          <>
-                            1개={bottle ? bottle.standardMl : "-"}ml
-                            {isValid && <> | {count}개={totalMl}ml</>}
-                          </>
-                        );
-                      })()
-                    : "\u00A0"
-                  }
-                </span>
-                {/* 삭제 버튼: 마지막 행이 아닐 때만 노출 */}
-                {drinks.length > 1 && idx !== drinks.length - 1 ? (
-                  <button
-                    type="button"
-                    className="ml-1 text-red-400 text-xs"
-                    onClick={() => handleRemoveDrink(idx)}
-                  >
-                    삭제
-                  </button>
-                ) : (
-                  <span className="ml-1 text-xs inline-block w-8" />
-                )}
-              </div>
-            ))}
-          </div>
-          {/* 장소명 */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">장소명 (선택)</label>
-            <input
-              type="text"
-              className="w-full border rounded px-3 py-2"
-              value={locationName}
-              onChange={e => setLocationName(e.target.value)}
-              placeholder="예: 홍대 주점"
-            />
-          </div>
-          {/* 위도 */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">위도 (선택)</label>
-            <input
-              type="number"
-              step="any"
-              className="w-full border rounded px-3 py-2"
-              value={locationLat}
-              onChange={e => setLocationLat(e.target.value)}
-              placeholder="예: 37.55555"
-            />
-          </div>
-          {/* 경도 */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">경도 (선택)</label>
-            <input
-              type="number"
-              step="any"
-              className="w-full border rounded px-3 py-2"
-              value={locationLng}
-              onChange={e => setLocationLng(e.target.value)}
-              placeholder="예: 126.9222"
-            />
-          </div>
-          {/* 기분 점수 */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">기분 점수 (1~5)</label>
-            <select
-              className="w-full border rounded px-3 py-2"
-              value={feelingScore}
-              onChange={e => setFeelingScore(e.target.value)}
-              required
-            >
-              <option value="1">1 (별로)</option>
-              <option value="2">2</option>
-              <option value="3">3 (보통)</option>
-              <option value="4">4</option>
-              <option value="5">5 (최고)</option>
-            </select>
-          </div>
-          {/* 메모 */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">메모 (선택)</label>
-            <input
-              type="text"
-              className="w-full border rounded px-3 py-2"
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              placeholder="메모를 입력하세요"
-            />
-          </div>
           <button
-            type="submit"
-            className="w-full text-white py-2 rounded transition font-bold cursor-pointer"
-            style={{ backgroundColor: TITLE_COLOR }}
+            onClick={handleRequestClose}
+            className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl"
+            aria-label="닫기"
           >
-            추가
+            ×
           </button>
-        </form>
+          <h3 className="text-lg font-bold mb-4 text-center">
+            음주 기록 추가
+          </h3>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {/* 날짜 선택 */}
+            <div>
+              <label className="block text-sm font-semibold mb-1">날짜</label>
+              <input
+                type="date"
+                className="w-full border rounded px-3 py-2"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                required
+                max={maxDate}
+              />
+            </div>
+            {/* 시간 선택 */}
+            <div>
+              <label className="block text-sm font-semibold mb-1">시간</label>
+              <input
+                type="time"
+                className="w-full border rounded px-3 py-2"
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                required
+                max={maxTime}
+              />
+            </div>
+            {/* 술 입력행 */}
+            <div>
+              <label className="block text-sm font-semibold mb-1">술 종류 및 개수</label>
+              {drinks.map((drink, idx) => {
+                const bottle = bottles.find(b => b.id === drink.bottleId);
+                const count = Number(drink.count);
+                const totalMl =
+                  bottle && !isNaN(count) && count > 0
+                    ? count * Number(bottle.standardMl)
+                    : null;
+
+                return (
+                  <div key={idx} className="mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <DrinkTypeDropdown
+                          bottles={bottles}
+                          value={drink.bottleId}
+                          search={drink.search}
+                          setSearch={v => handleDrinkChange(idx, "search", v)}
+                          onSelect={(id, name) => {
+                            handleDrinkChange(idx, "bottleId", id);
+                            handleDrinkChange(idx, "search", name);
+                          }}
+                          open={drink.dropdownOpen}
+                          setOpen={v => handleDrinkChange(idx, "dropdownOpen", v)}
+                        />
+                      </div>
+                      <input
+                        type="number"
+                        min={1}
+                        className="border rounded px-3 h-10 w-20"
+                        value={drink.count}
+                        onChange={e => handleDrinkChange(idx, "count", e.target.value)}
+                        placeholder="개수"
+                        required={idx === 0}
+                      />
+                      {drinks.length > 1 && (
+                        <button
+                          type="button"
+                          className="ml-2 text-red-400 text-xs h-10 px-3 rounded border border-red-300 hover:bg-red-50 transition"
+                          onClick={() => handleRemoveDrink(idx)}
+                        >
+                          삭제
+                        </button>
+                      )}
+                    </div>
+
+                    {/* 용량 안내 - 한 줄 아래 */}
+                    {!!bottle && (
+                      <div className="mt-1 ml-1 text-[13px] text-blue-700 font-semibold">
+                        1개 = {bottle.standardMl}ml
+                        {count > 0 && !isNaN(count) && (
+                          <> | {count}개 = {totalMl}ml</>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {/* 장소명 */}
+            {/* <div>
+              <label className="block text-sm font-semibold mb-1">장소명 (선택)</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={locationName}
+                onChange={e => setLocationName(e.target.value)}
+                placeholder="예: 홍대 주점"
+              />
+            </div> */}
+            <LocationSelector
+              value={locationLat && locationLng && locationName
+                ? { lat: Number(locationLat), lng: Number(locationLng), placeName: locationName }
+                : undefined}
+              onChange={loc => {
+                if (loc) {
+                  setLocationLat(String(loc.lat));
+                  setLocationLng(String(loc.lng));
+                  setLocationName(loc.placeName);
+                } else {
+                  setLocationLat("");
+                  setLocationLng("");
+                  setLocationName("");
+                }
+              }}
+            />
+
+            {/* 기분 점수 */}
+            <div>
+              <label className="block text-sm font-semibold mb-1">기분 점수 (1~5)</label>
+              <select
+                className="w-full border rounded px-3 py-2"
+                value={feelingScore}
+                onChange={e => setFeelingScore(e.target.value)}
+                required
+              >
+                <option value="1">1 (별로)</option>
+                <option value="2">2</option>
+                <option value="3">3 (보통)</option>
+                <option value="4">4</option>
+                <option value="5">5 (최고)</option>
+              </select>
+            </div>
+            {/* 메모 */}
+            <div>
+              <label className="block text-sm font-semibold mb-1">메모 (선택)</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                placeholder="메모를 입력하세요"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full text-white py-2 rounded transition font-bold cursor-pointer"
+              style={{ backgroundColor: TITLE_COLOR }}
+            >
+              추가
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
