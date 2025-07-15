@@ -83,16 +83,14 @@ import { updatePurchase, deletePurchase } from "@/services/purchase.service";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  const { id: purchaseId } = await context.params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
-
-  const userId = session.user.id;
-  const purchaseId = params.id;
 
   let body: unknown;
   try {
@@ -102,7 +100,7 @@ export async function PUT(
   }
 
   try {
-    const updated = await updatePurchase(body, purchaseId, userId);
+    const updated = await updatePurchase(body, purchaseId, session.user.id);
     return NextResponse.json(updated, { status: 200 });
   } catch (err: any) {
     console.error("Update error:", err);
@@ -115,19 +113,18 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  const { id: purchaseId } = await context.params;
   const session = await getServerSession(authOptions);
+
   if (!session?.user?.id) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const purchaseId = params.id;
-  const userId = session.user.id;
-
   try {
-    await deletePurchase(purchaseId, userId);
-    return new NextResponse(null, { status: 204 }); // No Content
+    await deletePurchase(purchaseId, session.user.id);
+    return new NextResponse(null, { status: 204 });
   } catch (err: any) {
     const msg = err.message ?? "Internal Server Error";
     const status = /not found|access denied/i.test(msg) ? 404 : 500;
