@@ -1,7 +1,6 @@
 // repositories/user.repository.ts
 import { db } from "@/lib/prisma";
 import { UserCreateInput } from "@/types/user.types";
-import { id } from "zod/locales";
 
 export async function createUserInDB(data: UserCreateInput) {
   return await db.user.create({
