@@ -25,7 +25,7 @@ export function Tab({ text, dir }: { text: string; dir: string }) {
       <span className="invisible font-bold absolute">{text}</span>
       <span
         className={
-          "px-[32px] py-[16px] mx-[16px] inline-block cursor-pointer transition-colors" +
+          "px-[12px] md:px-[32px] py-[16px] md:mx-[16px] inline-block cursor-pointer transition-colors" +
           (isActive && !isSocialLogin ? ` bg-gray-200 font-bold` : ` ${TAB_LIST_COLOR}`) +
           (isHover ? " bg-gray-200" : "")
         }

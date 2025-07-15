@@ -63,29 +63,11 @@ export default function Home() {
         recentTotalSpent={recentTotalSpent}
         formatDate={formatDate}
       />
-      <div id="footer" className="w-[60%]">
+      <div id="footer" className="w-full md:w-[60%] p-4">
         <div className="text-5xl">Placeholder</div>
-        <div className="text-4xl">Smoooooooooooooth Operatooooor</div>
-        <div className="m-16">
-          <div className="text-5xl">Color Test</div>
-          <div className="flex gap-2">
-            {colorList.map((rgb) => (
-              <div
-                key={rgb.join('-')}
-                className="w-16 h-16 rounded"
-                style={{ backgroundColor: `rgb(${rgb.join(',')})` }}
-              />
-            ))}
-          </div>
-        </div>
-        <Image
-          src={takanashiHoshino}
-          width={0}
-          height={0}
-          alt="23.jpg"
-          style={{ width: "100%", height: "auto" }}
-          sizes="100vw"
-        ></Image>
+        <div className="h-[33vh] bg-red-100"></div>
+        <div className="h-[90vh] bg-orange-100"></div>
+        <div className="h-[90vh] bg-yellow-100"></div>
       </div>
     </div>
   );
@@ -99,6 +81,6 @@ function formatDate(dateStr: string): string {
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
-  return `${yyyy}년 ${mm}월 ${dd}일`;
+  return `${yyyy} / ${mm} / ${dd}`;
 }
 

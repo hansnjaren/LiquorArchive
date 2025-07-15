@@ -2,7 +2,7 @@
 
 /**
  * @swagger
- * /api/home-stat:
+ * /api/homeStats:
  *   get:
  *     summary: 홈 통계 정보 조회
  *     tags: [Home]

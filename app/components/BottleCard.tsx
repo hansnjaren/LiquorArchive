@@ -1,5 +1,7 @@
+import { getHomeStat } from "@/services/homeStat.service";
 import { CARD_COLOR, TAB_LIST_COLOR } from "../constants";
 import type { Bottle, Purchase } from "../types";
+import { useSession } from "next-auth/react";
 
 const PLACEHOLDER_IMAGE = "/noImage.png";
 
@@ -33,7 +35,7 @@ export function BottleCard({
   const latestPurchaseDate = latestPurchase
     ? formatDateKorean(latestPurchase.purchaseDate)
     : "-";
-
+  
   return (
     <div
       className="border rounded-xl shadow p-4 flex flex-col gap-2"
