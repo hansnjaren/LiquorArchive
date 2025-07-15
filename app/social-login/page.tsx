@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TITLE_COLOR } from "../constants";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function SocialLoginPage() {
   const { data: session, status } = useSession();
@@ -97,9 +98,20 @@ export default function SocialLoginPage() {
         <div className="flex-grow border-t border-gray-300"></div>
       </div>
 
+      <Link
+        href="/signup"
+        id="signup"
+        className="relative w-full rounded-xl flex justify-center items-center cursor-pointer p-2 text-white"
+        style={{backgroundColor: TITLE_COLOR}}
+      >
+        <div>
+          회원가입
+        </div>
+      </Link>
+
       <div 
         id="social-login"
-        className="relative w-full rounded-xl flex justify-center items-center cursor-pointer p-2 text-white"
+        className="relative w-full rounded-xl flex justify-center items-center cursor-pointer p-2 text-white mt-8"
         style={{backgroundColor: TITLE_COLOR}}
         onClick={() =>
           signIn("google", {
@@ -119,11 +131,6 @@ export default function SocialLoginPage() {
           Google로 로그인
         </div>
       </div>
-        <div style={{
-          width: "100px",
-          height: "100px",
-          backgroundImage: "url('/GoogleLogo.png')",
-        }}></div>
         
     </div>
   );

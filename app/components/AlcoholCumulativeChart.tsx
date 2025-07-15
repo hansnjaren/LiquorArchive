@@ -1,45 +1,64 @@
-import { Line } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 
 export default function AlcoholCumulativeChart({
-  daysInMonth,
-  cumulativeByUnit,
+  labels,
+  dailyByUnit,
   unit,
+  loading = false,
 }: {
-  daysInMonth: number;
-  cumulativeByUnit: number[];
+  labels: string[];
+  dailyByUnit: number[];
   unit: { name: string; label: string };
+  loading?: boolean;
 }) {
+  if (loading) {
+    return (
+      <div className="w-full h-full bg-gray-200 animate-pulse rounded-lg" />
+    );
+  }
+
   const chartData = {
-    labels: Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`),
+    labels,
     datasets: [
       {
-        label: `누적 섭취량 (${unit.name})`,
-        data: cumulativeByUnit.map((v) => +v.toFixed(2)),
-        fill: true,
-        borderColor: "#2563eb",
-        backgroundColor: "rgba(37,99,235,0.08)",
-        tension: 0,
-        pointRadius: 2,
+        label: `일별 섭취량 (${unit.name})`,
+        data: dailyByUnit.map((v) => +v.toFixed(2)),
+        backgroundColor: "rgba(37,99,235,0.6)",
+        borderRadius: 4,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9,
       },
     ],
   };
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false, // 핵심
+    layout: { padding: 0 },
     plugins: {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (context: any) =>
-            `누적: ${context.parsed.y.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit.label}`,
+          label: (ctx: any) =>
+            `섭취량: ${ctx.parsed.y.toLocaleString(undefined, {
+              maximumFractionDigits: 2,
+            })} ${unit.label}`,
         },
       },
     },
     scales: {
-      x: { title: { display: true, text: "일" } },
-      y: { title: { display: true, text: unit.label }, beginAtZero: true },
+      x: {
+        title: { display: true, text: "일" },
+        ticks: {
+          maxTicksLimit: 31,
+        },
+      },
+      y: {
+        title: { display: true, text: unit.label },
+        beginAtZero: true,
+      },
     },
   };
 
-  return <Line data={chartData} options={chartOptions} height={220} />;
+  return <Bar data={chartData} options={chartOptions} />;
 }
