@@ -36,6 +36,8 @@ export async function findBySearch(params: FindBottleBySearchQuery) {
     ...(category && { category: category as BottleCategory }), // 카테고리 필터링
   };
 
+  console.log("검색 조건 : ", where);
+
   return db.bottle.findMany({
     where,
     skip,

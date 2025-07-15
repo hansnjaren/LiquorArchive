@@ -108,3 +108,15 @@ export async function deletePurchaseById(purchaseId: string, userId: string) {
     where: { id: purchaseId },
   });
 }
+
+export async function findPurchaseByUserIdRecent10(userId: string) {
+  // 유저의 최근 10개 구매 내역 조회
+  return await db.purchase.findMany({
+    where: { userId },
+    orderBy: { purchaseDate: "desc" },
+    take: 10,
+    include: {
+      bottle: true, // 병 정보도 포함
+    },
+  });
+}
