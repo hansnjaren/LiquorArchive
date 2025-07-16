@@ -12,6 +12,7 @@ interface LocationValue {
   lng: number;
   placeName: string;
 }
+
 interface Props {
   value?: LocationValue;
   onChange: (loc: LocationValue | null) => void;
@@ -19,89 +20,108 @@ interface Props {
 
 export default function LocationSelector({ value, onChange }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [keyword, setKeyword] = useState(value?.placeName || "");
+  const [keyword, setKeyword] = useState(value?.placeName ?? "");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [map, setMap] = useState<any>(null);
   const [marker, setMarker] = useState<any>(null);
+  const [debugState, setDebugState] = useState<any>({});
 
-  // 최초 로딩: value가 있으면 그 위치, 없으면 geolocation(현재위치), fallback(서울)
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      window.kakao &&
-      window.kakao.maps &&
-      mapRef.current
-    ) {
-      if (map) return;
+    const getDebugInfo = (label = "") => ({
+      label,
+      kakao: typeof window !== "undefined" && !!window.kakao,
+      kakaoMaps: typeof window !== "undefined" && !!window.kakao?.maps,
+      mapRef: !!mapRef.current,
+      offsetWidth: mapRef.current?.offsetWidth,
+      offsetHeight: mapRef.current?.offsetHeight,
+      value,
+      map: !!map,
+      marker: !!marker,
+    });
 
-      let center;
+    setDebugState(getDebugInfo("mounted"));
+
+    if (
+      typeof window === "undefined" ||
+      !window.kakao ||
+      !window.kakao.maps ||
+      !mapRef.current ||
+      map
+    )
+      return;
+
+    window.kakao.maps.load(() => {
+      setDebugState(getDebugInfo("kakao.maps.load 실행됨"));
+
+      const fallbackCenter = new window.kakao.maps.LatLng(37.5665, 126.9780);
+
+      const createMapWithCenter = (center: any) => {
+        const instance = new window.kakao.maps.Map(mapRef.current, {
+          center,
+          level: 3,
+        });
+        setMap(instance);
+
+        setTimeout(() => {
+          instance.relayout();
+          instance.setCenter(center);
+        }, 300);
+      };
+
+      // 1. value가 있으면 해당 좌표로 시작
       if (value) {
-        center = new window.kakao.maps.LatLng(value.lat, value.lng);
-      } else if (navigator.geolocation) {
+        const center = new window.kakao.maps.LatLng(value.lat, value.lng);
+        createMapWithCenter(center);
+      }
+      // 2. 현재 위치 사용 (geolocation)
+      else if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          pos => {
-            const cent = new window.kakao.maps.LatLng(
+          (pos) => {
+            const center = new window.kakao.maps.LatLng(
               pos.coords.latitude,
               pos.coords.longitude
             );
-            const newMap = new window.kakao.maps.Map(mapRef.current, {
-              center: cent,
-              level: 3,
+            createMapWithCenter(center);
+
+            // ✅ 위치가 선택되지 않은 상태일 때, 현재 위치를 선택값으로 설정
+            onChange({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              placeName: "", // 장소 이름은 빈 값이지만 좌표는 셋업됨
             });
-            setMap(newMap);
           },
           () => {
-            center = new window.kakao.maps.LatLng(37.5665, 126.9780); // 서울
-            setMap(
-              new window.kakao.maps.Map(mapRef.current, {
-                center,
-                level: 3,
-              }),
-            );
+            createMapWithCenter(fallbackCenter);
           }
         );
-        return;
-      } else {
-        center = new window.kakao.maps.LatLng(37.5665, 126.9780); // 서울
       }
+      // 3. geolocation 지원 안되면 fallback
+      else {
+        createMapWithCenter(fallbackCenter);
+      }
+    });
+  }, [value]);
 
-      setMap(
-        new window.kakao.maps.Map(mapRef.current, {
-          center,
-          level: 3,
-        }),
-      );
-    }
-    // eslint-disable-next-line
-  }, [window.kakao, value, mapRef.current]);
-
-  // value가 바뀌면 지도·마커 위치 갱신
+  // value 변경 → 마커 이동
   useEffect(() => {
-    if (
-      map &&
-      value &&
-      value.lat &&
-      value.lng
-    ) {
-      const coords = new window.kakao.maps.LatLng(value.lat, value.lng);
-      map.setCenter(coords);
-      if (marker) marker.setMap(null);
-      const mk = new window.kakao.maps.Marker({ map, position: coords });
-      setMarker(mk);
-    }
-    // eslint-disable-next-line
+    if (!map || !value || !window.kakao?.maps) return;
+
+    const coords = new window.kakao.maps.LatLng(value.lat, value.lng);
+    map.setCenter(coords);
+    if (marker) marker.setMap(null);
+    const mk = new window.kakao.maps.Marker({ map, position: coords });
+    setMarker(mk);
   }, [value, map]);
 
-  // 장소 검색 (입력)
+  // 장소 검색
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setKeyword(val);
 
     if (
       !val.trim() ||
-      !window.kakao ||
-      !window.kakao.maps.services ||
-      !map
+      !map ||
+      !window.kakao?.maps?.services
     ) {
       setSuggestions([]);
       return;
@@ -117,15 +137,19 @@ export default function LocationSelector({ value, onChange }: Props) {
     });
   };
 
-  // 결과 중 하나 선택
+  // 장소 선택
   const handleSelect = (place: any) => {
+    if (!window.kakao?.maps || !map) return;
+
     const coords = new window.kakao.maps.LatLng(place.y, place.x);
     map.setCenter(coords);
     if (marker) marker.setMap(null);
+
     const mk = new window.kakao.maps.Marker({ map, position: coords });
     setMarker(mk);
     setKeyword(place.place_name);
     setSuggestions([]);
+
     onChange({
       lat: Number(place.y),
       lng: Number(place.x),
@@ -133,8 +157,14 @@ export default function LocationSelector({ value, onChange }: Props) {
     });
   };
 
+  // 디버깅 출력
+  useEffect(() => {
+    console.log("🧪 지도 디버깅:", debugState);
+  }, [debugState]);
+
   return (
     <div>
+      {/* 검색 입력 */}
       <div className="relative w-full">
         <input
           value={keyword}
@@ -161,11 +191,13 @@ export default function LocationSelector({ value, onChange }: Props) {
           </ul>
         )}
       </div>
+
+      {/* 지도 */}
       <div
         ref={mapRef}
         style={{
-          width: 400,
-          height: 300,
+          width: "100%",
+          height: "300px",
           borderRadius: 12,
           marginTop: 16,
           background: "#eee",
