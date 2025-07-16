@@ -100,26 +100,25 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 import {
   updateDrinkingLog,
   deleteDrinkingLog,
 } from "@/services/drinkingLog.service";
 
+// PATCH 수정
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  const { id: logId } = await context.params;
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
-
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const logId = params.id;
   let body: unknown;
-
   try {
     body = await req.json();
   } catch {
@@ -131,20 +130,16 @@ export async function PATCH(
     return NextResponse.json(updated, { status: 200 });
   } catch (err: any) {
     if (err instanceof Error) {
-      if (err.message === "NOT_FOUND") {
+      if (err.message === "NOT_FOUND")
         return NextResponse.json(
           { message: "Drinking log not found" },
           { status: 404 }
         );
-      }
-      if (err.message === "FORBIDDEN") {
+      if (err.message === "FORBIDDEN")
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-      }
-      if (err.message.startsWith("Invalid drinkTypeIds")) {
+      if (err.message.startsWith("Invalid drinkTypeIds"))
         return NextResponse.json({ message: err.message }, { status: 400 });
-      }
     }
-
     console.error("PATCH /drinkingLogs/:id error:", err);
     return NextResponse.json(
       { message: "Internal server error" },
@@ -153,35 +148,31 @@ export async function PATCH(
   }
 }
 
+// DELETE 수정
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  const { id: logId } = await context.params;
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
-
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
-
-  const logId = params.id;
 
   try {
     const deleted = await deleteDrinkingLog(userId, logId);
     return NextResponse.json(deleted, { status: 200 });
   } catch (err: any) {
     if (err instanceof Error) {
-      if (err.message === "NOT_FOUND") {
+      if (err.message === "NOT_FOUND")
         return NextResponse.json(
           { message: "Drinking log not found" },
           { status: 404 }
         );
-      }
-      if (err.message === "FORBIDDEN") {
+      if (err.message === "FORBIDDEN")
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-      }
     }
-
     console.error("DELETE /drinkingLogs/:id error:", err);
     return NextResponse.json(
       { message: "Internal server error" },

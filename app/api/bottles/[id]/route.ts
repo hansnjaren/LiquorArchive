@@ -29,23 +29,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBottleById } from "@/services/bottle.service";
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(_: NextRequest, context: RouteContext) {
-  const id = context.params.id;
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  // 동기처럼 params 사용하고 싶다면 await를 붙여야 합니다
+  const { id } = await context.params;
 
   try {
     const bottle = await getBottleById({ id });
-
     if (!bottle) {
       return NextResponse.json({ error: "Bottle not found" }, { status: 404 });
     }
-
-    return NextResponse.json(bottle, { status: 200 });
+    return NextResponse.json(bottle);
   } catch (err) {
     console.error("[GET /api/bottles/:id] 오류:", err);
     return NextResponse.json({ error: "서버 오류" }, { status: 500 });
