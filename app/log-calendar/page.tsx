@@ -166,10 +166,9 @@ export default function CalendarContainer() {
     setSelectedDate(newDate);
   };
 
-  if (loading) return <div className="p-6">로딩 중...</div>;
-
   return (
     <CalendarView
+      loading={loading}
       today={today}
       currentMonth={currentMonth}
       setCurrentMonth={setCurrentMonth}

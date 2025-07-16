@@ -106,6 +106,12 @@
 import { getLoggedInUser } from "@/lib/auth";
 import { updateUser, deleteUser } from "@/services/user.service";
 import { NextResponse, NextRequest } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+
+const sb = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function GET() {
   try {
@@ -133,32 +139,50 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   try {
-    const user = await getLoggedInUser(); // 로그인 유저 가져오기
-    const body = await req.json();
+    const user = await getLoggedInUser();
+    const form = await req.formData();
+    const file = form.get("file") as Blob | null;
+    let imageUrl: string | null = null;
+
+    if (file) {
+      const ext = file.type.split("/")[1] ?? "png";
+      const path = `users/${user.id}/${Date.now()}.${ext}`;
+      const { data: uploadData, error: uploadError } = await sb.storage
+        .from("media")
+        .upload(path, file, { upsert: true });
+      if (uploadError)
+        return NextResponse.json({ error: uploadError }, { status: 500 });
+
+      const { data: urlData } = sb.storage
+        .from("media")
+        .getPublicUrl(uploadData.path);
+      imageUrl = urlData.publicUrl;
+    }
+
+    const name = form.get("name");
+    const gender = form.get("gender");
 
     const updated = await updateUser(user.id, {
-      name: body.name,
-      image: body.image ?? null,
-      gender: body.gender,
+      name: typeof name === "string" ? name : undefined,
+      gender: typeof gender === "string" ? (gender as any) : undefined,
+      image: imageUrl,
     });
 
     return NextResponse.json({
       id: updated.id,
       email: updated.email,
       name: updated.name,
-      image: updated.image,
       gender: updated.gender,
+      image: updated.image,
     });
   } catch (e: any) {
-    const message = e.message || "Internal Server Error";
     const status =
-      message === "User not found"
+      e.message === "Unauthorized"
+        ? 401
+        : e.message === "User not found"
         ? 404
-        : message === "User already deleted"
-        ? 400
         : 500;
-
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: e.message }, { status });
   }
 }
 

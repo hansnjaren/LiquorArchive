@@ -1,10 +1,12 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import PurchaseList from "../components/PurchaseList";
 import PurchaseHeader from "../components/PurchaseHeader";
 import PurchaseSearchInput from "../components/PurchaseSearchInput";
 import PurchaseModalManager from "../components/PurchaseModalManager";
+import PurchaseSkeletonItem from "../components/PurchaseSkeletonItem";
 import type { Purchase, Bottle } from "../types";
 
 // DB 연동 fetch 함수
@@ -38,25 +40,41 @@ export default function UserPurchaseListPage() {
         setPurchases(purchases);
         setBottles(bottles);
       })
-      .catch(e => alert(e.message))
+      .catch((e) => alert(e.message))
       .finally(() => setLoading(false));
   }, [status]);
 
-  // 세션에서 userId 추출
+  // 세션 유저 정보
   const userId = session?.user?.id;
 
-  // userId가 없는 경우(로그인 안됨)는 아무것도 보여주지 않음
-  if (status === "loading" || loading) return <div className="p-6">로딩 중...</div>;
-  if (!userId) return <div className="p-6 text-red-500">로그인이 필요합니다.</div>;
+  // 로딩 중 스켈레톤 출력
+  if (status === "loading" || loading) {
+    return (
+      <div className="p-6 h-[calc(100vh-80px)] overflow-hidden transition-all duration-300">
+        <PurchaseHeader count={0} onAdd={() => {}} />
+        <PurchaseSearchInput value={search} onChange={setSearch} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <PurchaseSkeletonItem key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  // userId로 필터링 (혹시 API가 전체 구매 내역을 반환하는 경우를 대비)
+  // 로그인 안 되어 있으면 안내
+  if (!userId) {
+    return <div className="p-6 text-red-500">로그인이 필요합니다.</div>;
+  }
+
+  // 유저 구매 내역 정렬
   const userPurchases = purchases
     .filter((p) => p.userId === userId)
     .sort(
-      (a, b) =>
-        new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
+      (a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
     );
 
+  // 검색 필터
   const filteredPurchases = search
     ? userPurchases.filter((purchase) => {
         const bottle = bottles.find((b) => b.id === purchase.bottleId);
@@ -73,14 +91,17 @@ export default function UserPurchaseListPage() {
           (isNumber &&
             purchase.price !== null &&
             purchase.price !== undefined &&
-            purchase.price.toString().includes(keyword)
-          )
+            purchase.price.toString().includes(keyword))
         );
       })
     : userPurchases;
 
-  // DB 연동 CRUD 핸들러
-  const handleAdd = async (newPurchase: Omit<Purchase, "id" | "createdAt" | "updatedAt" | "userId"> & { bottleId: string }) => {
+  // CRUD 핸들러
+  const handleAdd = async (
+    newPurchase: Omit<Purchase, "id" | "createdAt" | "updatedAt" | "userId"> & {
+      bottleId: string;
+    }
+  ) => {
     const res = await fetch("/api/purchases", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -97,7 +118,6 @@ export default function UserPurchaseListPage() {
   };
 
   const handleEdit = async (updated: Purchase) => {
-    // bottleId는 수정 불가이므로 제외
     const { id, bottleId, ...body } = updated;
     const res = await fetch(`/api/purchases/${id}`, {
       method: "PUT",
@@ -128,11 +148,15 @@ export default function UserPurchaseListPage() {
   };
 
   return (
-    <div className="p-6">
-      <PurchaseHeader count={filteredPurchases.length} onAdd={() => setShowAddModal(true)} />
+    <div className="p-6 min-h-screen overflow-auto transition-all duration-300">
+      <PurchaseHeader
+        count={filteredPurchases.length}
+        onAdd={() => setShowAddModal(true)}
+      />
       <PurchaseSearchInput value={search} onChange={setSearch} />
+
       {filteredPurchases.length === 0 ? (
-        <div className="text-gray-500">구매 내역이 없습니다.</div>
+        <div className="text-gray-500 mt-4">구매 내역이 없습니다.</div>
       ) : (
         <PurchaseList
           purchases={filteredPurchases}
@@ -143,6 +167,8 @@ export default function UserPurchaseListPage() {
           }}
         />
       )}
+
+      {/* 모달 매니저 */}
       <PurchaseModalManager
         showAdd={showAddModal}
         showDetail={showDetailModal}

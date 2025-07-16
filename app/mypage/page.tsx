@@ -127,7 +127,8 @@ export default function MyPage() {
     (selectedYear === today.getFullYear() &&
       selectedMonth >= today.getMonth() + 1);
 
-  const { data: session } = useSession();
+  // 세션 및 update 함수 사용
+  const { data: session, update } = useSession();
 
   const makeMonthParam = (date: Date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -201,10 +202,11 @@ export default function MyPage() {
       <h2 className="text-2xl font-bold mb-4">마이페이지</h2>
       <div className="flex items-center gap-4 mb-6">
         <img
-          src={session?.user?.image ?? "/noImage.png"}
-          alt={session?.user?.name ?? "프로필"}
+          src={session?.user?.image || "/noImage.png"}
+          alt={session?.user?.name || "프로필"}
           className="w-20 h-20 rounded-full object-cover border"
         />
+
         <div>
           <div className="text-lg font-bold">
             {session?.user?.name ?? "알 수 없음"}
@@ -227,10 +229,15 @@ export default function MyPage() {
         {editOpen && (
           <UserEditModal
             onClose={() => setEditOpen(false)}
-            onSuccess={() => {
-              alert("수정 완료!");
-              fetchStats();
-              fetchProfileStats();
+            onSuccess={async () => {
+              // alert("수정 완료!");
+              await fetchStats();
+              await fetchProfileStats();
+              // await update();
+              if (update) {
+                // 세션 즉시 갱신!
+                await update();
+              }
             }}
           />
         )}

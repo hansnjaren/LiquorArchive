@@ -12,7 +12,7 @@ export default function PurchaseList({
 }) {
   const getBottle = (id: string) => bottles.find((b) => b.id === id);
   return (
-    <ul className="space-y-4">
+    <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {purchases.map((purchase) => (
         <PurchaseListItem
           key={purchase.id}
@@ -24,3 +24,4 @@ export default function PurchaseList({
     </ul>
   );
 }
+

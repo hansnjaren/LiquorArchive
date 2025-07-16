@@ -11,6 +11,7 @@ import { DrinkType, DrinkLog } from "../types";
 
 export default function CalendarView(props: any) {
   const {
+    loading,
     today,
     currentMonth,
     setCurrentMonth,
@@ -110,6 +111,44 @@ const isNextDateDisabled: boolean | undefined =
   selectedDateStr
     ? format(new Date(selectedDateStr), "yyyy-MM-dd") >= todayStr
     : undefined;
+
+
+  
+  if (loading) {
+    return (
+      <div
+        className="max-w-md mx-auto p-4 mt-[15vh] rounded-2xl"
+        style={{ backgroundColor: `${TAB_LIST_COLOR}` }}>
+        {/* 상단: 오늘로 이동/음주기록 추가 버튼 Skeleton */}
+        <div className="flex items-center mb-4 relative min-h-[40px]">
+          {/* 오늘로 이동 버튼(중앙) 스켈레톤 */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <div className="w-24 h-9 rounded-lg bg-gray-300 animate-pulse"></div>
+          </div>
+          {/* 음주 기록 추가 버튼(오른쪽) 스켈레톤 */}
+          <div className="ml-auto">
+            <div className="w-28 h-9 rounded-lg bg-gray-300 animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* 달력 헤더 스켈레톤 */}
+        <div className="flex justify-center items-center mb-6">
+          {/* <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div> */}
+          <div className="w-32 h-8 rounded-lg bg-gray-300 animate-pulse"></div>
+          {/* <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div> */}
+        </div>
+        {/* 요일 헤더는 실제와 동일하게 */}
+        <div className="grid grid-cols-7 mb-2 text-center text-gray-500">
+          <div>일</div><div>월</div><div>화</div><div>수</div>
+          <div>목</div><div>금</div><div>토</div>
+        </div>
+        {/* CalendarGrid Skeleton: (앞서 설명한 6행 7열의 원형 Skeleton) */}
+        <div
+          className="w-full h-[200px] bg-gray-300 rounded-2xl animate-pulse"
+        ></div>
+      </div>
+    );
+  }
 
   return (
     <div

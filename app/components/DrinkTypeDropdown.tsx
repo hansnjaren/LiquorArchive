@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import type { DrinkType } from "../types";
 
 interface Props {
@@ -30,9 +30,9 @@ export function DrinkTypeDropdown({
       <input
         ref={inputRef}
         type="text"
-        className="border rounded px-2 py-1 w-full"
+        className="border rounded w-full h-10 px-3"
         value={search}
-        onChange={e => {
+        onChange={(e) => {
           setSearch(e.target.value);
           setOpen(true);
         }}
@@ -43,7 +43,7 @@ export function DrinkTypeDropdown({
       {open && (
         <ul
           className="absolute z-10 left-0 right-0 bg-white border rounded shadow max-h-48 overflow-y-auto mt-1"
-          onMouseDown={e => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
         >
           {filtered.length === 0 && (
             <li className="px-3 py-2 text-gray-400">검색 결과 없음</li>
