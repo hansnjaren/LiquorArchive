@@ -22,11 +22,10 @@ function formatDate(dateStr: string): string {
 
 export default function Home() {
   const now = new Date();
+
   const userPurchases = purchases.filter((p) => p.userId === userId);
   const latestPurchaseDateStr = userPurchases.length
-    ? userPurchases
-        .map((p) => p.purchaseDate)
-        .sort((a, b) => (a > b ? -1 : 1))[0]
+    ? userPurchases.map((p) => p.purchaseDate).sort((a, b) => (a > b ? -1 : 1))[0]
     : "";
 
   const thirtyDaysAgo = new Date(now);
@@ -52,7 +51,7 @@ export default function Home() {
   const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [kakaoReady, setKakaoReady] = useState(false);
 
-  // ✅ Script onLoad에서 kakaoReady true (최초 Script 로드)
+  // ✅ Script 로드되었을 때 kakao SDK 초기화
   const handleKakaoScriptLoad = () => {
     if (
       window.kakao &&
@@ -65,7 +64,7 @@ export default function Home() {
     }
   };
 
-  // ✅ SPA 재진입(마이페이지 등) 시 이미 SDK가 있다면 바로 kakaoReady true
+  // ✅ SPA 재진입 시 SDK 있는 경우 중복 로딩 방지
   useEffect(() => {
     if (
       !kakaoReady &&
@@ -75,47 +74,60 @@ export default function Home() {
     ) {
       setKakaoReady(true);
     }
-  }, []);
+  }, [kakaoReady]);
 
-  // 기록 데이터 불러오기 (로그인 시)
+  // ✅ 로그인된 경우 logs 데이터 불러오기
   useEffect(() => {
     if (status !== "authenticated") {
       setLogs([]);
       setLoading(false);
       return;
     }
+
     setLoading(true);
     fetch("/api/drinkingLogs/me", { credentials: "include" })
       .then((res) => res.json())
-      .then((data) => setLogs(data))
-      .catch(() => setLogs([]))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setLogs(data);
+        } else {
+          console.warn("❗ API 응답이 배열이 아님:", data);
+          setLogs([]);
+        }
+      })
+      .catch((err) => {
+        console.error("❗ 로그 불러오기 실패:", err);
+        setLogs([]);
+      })
       .finally(() => setLoading(false));
   }, [status]);
 
-  // 로그인한 경우 logs에서 center 지정
+  // ✅ 로그 데이터에서 지도 초기 위치 결정
   useEffect(() => {
     if (status !== "authenticated") return;
-    if (!logs || logs.length === 0) return;
+    if (!Array.isArray(logs) || logs.length === 0) return;
     if (center) return;
+
     const first = logs.find(
       (log) => log.locationLat && log.locationLng
     );
+
     if (first) {
       setCenter({
         lat: Number(first.locationLat),
         lng: Number(first.locationLng),
       });
     }
-  }, [status, logs]);
+  }, [status, logs, center]);
 
-  // 비로그인 시 현재 위치
+  // ✅ 비로그인 상태에서 지도 중심 지정
   useEffect(() => {
     if (status === "authenticated") return;
     if (!navigator.geolocation) return;
+
     navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setCenter({ lat: 37.5665, lng: 126.978 })
+      (pos) => setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => setCenter({ lat: 37.5665, lng: 126.978 }) // 서울 시청 fallback
     );
   }, [status]);
 
@@ -126,7 +138,6 @@ export default function Home() {
         strategy="afterInteractive"
         onLoad={handleKakaoScriptLoad}
       />
-
 
       <BodySection
         videoSrc="title.mp4"
@@ -141,6 +152,7 @@ export default function Home() {
           <span className="text-5xl">Check where did you drink</span>
           <span className={`text-9xl ${merriweather.className}`}>&#8595;</span>
         </div>
+
         <div className="h-[90vh] relative flex items-center justify-center">
           {!loading && center && kakaoReady ? (
             <KakaoMapMarkers

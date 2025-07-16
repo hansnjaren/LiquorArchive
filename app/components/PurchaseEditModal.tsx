@@ -214,7 +214,7 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
               <div className="text-xs text-red-500 mt-1">{priceError}</div>
             )}
           </div>
-          <div>
+          {/* <div>
             <label className="block text-sm font-semibold mb-1">
               장소(선택)
             </label>
@@ -224,7 +224,7 @@ export default function PurchaseEditModal({ purchase, bottles, onClose, onSubmit
               value={place}
               onChange={e => setPlace(e.target.value)}
             />
-          </div>
+          </div> */}
           <div>
             <label className="block text-sm font-semibold mb-1">
               메모(선택)

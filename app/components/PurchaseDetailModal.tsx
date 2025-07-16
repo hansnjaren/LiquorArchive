@@ -105,9 +105,9 @@ export default function PurchaseDetailModal({
               <strong>가격:</strong>{" "}
               {purchase.price ? `${purchase.price.toLocaleString()}원` : "-"}
             </div>
-            <div>
+            {/* <div>
               <strong>장소:</strong> {purchase.place ?? "-"}
-            </div>
+            </div> */}
             <div>
               <strong>병 수:</strong> {purchase.quantity ?? 1}병
             </div>

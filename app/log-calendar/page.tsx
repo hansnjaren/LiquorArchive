@@ -14,14 +14,14 @@ import type { DrinkLog, DrinkType } from "../types";
 // 음주 기록 fetch 함수
 async function fetchDrinkLogs(): Promise<DrinkLog[]> {
   const res = await fetch("/api/drinkingLogs/me", { credentials: "include" });
-  if (!res.ok) throw new Error("음주 기록을 불러오지 못했습니다.");
+  // if (!res.ok) throw new Error("음주 기록을 불러오지 못했습니다.");
   return res.json();
 }
 
 // DrinkType fetch 함수
 async function fetchDrinkTypes(): Promise<DrinkType[]> {
   const res = await fetch("/api/drinkTypes");
-  if (!res.ok) throw new Error("주종 목록을 불러오지 못했습니다.");
+  // if (!res.ok) throw new Error("주종 목록을 불러오지 못했습니다.");
   return res.json();
 }
 

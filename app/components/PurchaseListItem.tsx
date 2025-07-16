@@ -36,9 +36,9 @@ export default function PurchaseListItem({
         <div className="text-sm text-gray-600">
           가격: {purchase.price ? `${purchase.price.toLocaleString()}원` : "-"}
         </div>
-        <div className="text-sm text-gray-600">
+        {/* <div className="text-sm text-gray-600">
           장소: {purchase.place ?? "-"}
-        </div>
+        </div> */}
         <div className="text-sm text-blue-700 font-semibold">
           병 수: {purchase.quantity ?? 1}병
         </div>

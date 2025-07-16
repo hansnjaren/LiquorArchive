@@ -229,7 +229,7 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
             )}
           </div>
           {/* 장소 */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-semibold mb-1">
               장소(선택)
             </label>
@@ -239,7 +239,7 @@ export default function PurchaseAddModal({ bottles, onClose, onSubmit }: Props) 
               value={place}
               onChange={(e) => setPlace(e.target.value)}
             />
-          </div>
+          </div> */}
           {/* 메모 */}
           <div>
             <label className="block text-sm font-semibold mb-1">

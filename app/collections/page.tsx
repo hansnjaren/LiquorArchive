@@ -9,12 +9,12 @@ import type { Bottle, Purchase } from "../types";
 
 async function fetchBottles(): Promise<Bottle[]> {
   const res = await fetch("/api/bottles");
-  if (!res.ok) throw new Error("술 목록을 불러오지 못했습니다.");
+  // if (!res.ok) throw new Error("술 목록을 불러오지 못했습니다.");
   return res.json();
 }
 async function fetchPurchases(): Promise<Purchase[]> {
   const res = await fetch("/api/purchases/me", { credentials: "include" });
-  if (!res.ok) throw new Error("구매 내역을 불러오지 못했습니다.");
+  // if (!res.ok) throw new Error("구매 내역을 불러오지 못했습니다.");
   return res.json();
 }
 
