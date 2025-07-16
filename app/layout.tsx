@@ -26,6 +26,10 @@ export default function RootLayout({
           src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&libraries=services&autoload=false`}
           strategy="beforeInteractive"
         />
+        {/* <Script
+          src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&libraries=services`}
+          strategy="beforeInteractive"
+        /> */}
       </head>
       <body className={montserrat.className}>
         <SessionWrapper>

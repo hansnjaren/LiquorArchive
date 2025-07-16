@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+"use client";
+
+import { useRef, useState, useEffect } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import { TITLE_COLOR } from "../constants";
 import type { DrinkType, DrinkLog } from "../types";
 import { DrinkTypeDropdown } from "./DrinkTypeDropdown";
 import LocationSelector from "./LocationSelector";
+import { updateDrinkList } from "../utils/drinkList";
 
 interface Props {
   log: DrinkLog;
@@ -35,13 +38,13 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
   const [time, setTime] = useState(getLocalTimeString(logDateObj));
   const [locationName, setLocationName] = useState(log.locationName ?? "");
   const [locationLat, setLocationLat] = useState(
-    log.locationLat !== undefined && log.locationLat !== null ? String(log.locationLat) : ""
+    log.locationLat != null ? String(log.locationLat) : ""
   );
   const [locationLng, setLocationLng] = useState(
-    log.locationLng !== undefined && log.locationLng !== null ? String(log.locationLng) : ""
+    log.locationLng != null ? String(log.locationLng) : ""
   );
   const [feelingScore, setFeelingScore] = useState(
-    log.feelingScore !== undefined && log.feelingScore !== null ? String(log.feelingScore) : "3"
+    log.feelingScore != null ? String(log.feelingScore) : "3"
   );
   const [note, setNote] = useState(log.note ?? "");
   const [drinks, setDrinks] = useState<{ bottleId: string; count: string; search: string; dropdownOpen: boolean }[]>(
@@ -72,6 +75,7 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
     }
   );
 
+  // log, bottles 변경 시 drinks 동기화
   useEffect(() => {
     setDrinks(() => {
       let arr =
@@ -98,13 +102,11 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
       }
       return arr;
     });
-    // eslint-disable-next-line
   }, [log, bottles]);
 
   const [closing, setClosing] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-  const [dragStartedInside, setDragStartedInside] = useState(false);
 
   const now = new Date();
   const todayStr = getLocalDateString(now);
@@ -112,6 +114,24 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
   const maxDate = todayStr;
 
   const handleRequestClose = () => setClosing(true);
+
+  // 🔴 외부 클릭 시 모달 닫기 (Add 모달과 동일)
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(e.target as Node)
+      ) {
+        handleRequestClose();
+      }
+    };
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // 닫힘 애니메이션 완료시 onClose
   useEffect(() => {
     if (!closing) return;
     const el = backdropRef.current;
@@ -121,57 +141,18 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
     return () => el.removeEventListener("animationend", handleAnimationEnd);
   }, [closing, onClose]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (modalRef.current && modalRef.current.contains(e.target as Node)) {
-      setDragStartedInside(true);
-    } else {
-      setDragStartedInside(false);
-    }
-  };
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (dragStartedInside) {
-      setDragStartedInside(false);
-      return;
-    }
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      handleRequestClose();
-    }
-  };
-
-  const handleDrinkChange = (idx: number, key: "bottleId" | "count" | "search" | "dropdownOpen", value: string | boolean) => {
-    setDrinks(prev => {
-      const next = [...prev];
-      next[idx] = { ...next[idx], [key]: value };
-      if (
-        next.length < 10 &&
-        next[next.length - 1].bottleId &&
-        next[next.length - 1].count
-      ) {
-        next.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
-      }
-      while (
-        next.length > 1 &&
-        !next[next.length - 1].bottleId &&
-        !next[next.length - 1].count &&
-        !next[next.length - 2].bottleId &&
-        !next[next.length - 2].count
-      ) {
-        next.pop();
-      }
-      return next;
-    });
+  const handleDrinkChange = (
+    idx: number,
+    key: "bottleId" | "count" | "search" | "dropdownOpen",
+    value: string | boolean
+  ) => {
+    setDrinks(prev => updateDrinkList(prev, idx, key, value));
   };
 
   const handleRemoveDrink = (idx: number) => {
     setDrinks(prev => {
-      let next = prev.filter((_, i) => i !== idx);
-      if (
-        next.length === 0 ||
-        (next[next.length - 1].bottleId && next[next.length - 1].count)
-      ) {
-        next.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
-      }
-      return next;
+      const next = prev.filter((_, i) => i !== idx);
+      return updateDrinkList(next, next.length - 1, "dropdownOpen", false);
     });
   };
 
@@ -239,8 +220,6 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
     <div
       ref={backdropRef}
       className={`fixed inset-0 bg-black/40 flex items-center justify-center z-50 ${closing ? "animate-modal-out" : "animate-modal-in"}`}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleBackdropClick}
     >
       <div
         ref={modalRef}
@@ -283,9 +262,10 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
                 max={maxTime}
               />
             </div>
-            {/* 술 입력행 */}
             <div>
-              <label className="block text-sm font-semibold mb-1">술 종류 및 개수</label>
+              <label className="block text-sm font-semibold mb-1">
+                술 종류 및 개수
+              </label>
               {drinks.map((drink, idx) => {
                 const bottle = bottles.find(b => b.id === drink.bottleId);
                 const count = Number(drink.count);
@@ -293,7 +273,6 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
                   bottle && !isNaN(count) && count > 0
                     ? count * Number(bottle.standardMl)
                     : null;
-
                 return (
                   <div key={idx} className="mb-3">
                     <div className="flex items-center gap-2">
@@ -330,7 +309,6 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
                         </button>
                       )}
                     </div>
-                    {/* 용량 안내 - 한 줄 아래 */}
                     {!!bottle && (
                       <div className="mt-1 ml-1 text-[13px] text-blue-700 font-semibold">
                         1개 = {bottle.standardMl}ml
@@ -345,11 +323,11 @@ export default function DrinkLogEditModal({ log, bottles, onClose, onSubmit }: P
             </div>
             <LocationSelector
               value={
-                log.locationLat && log.locationLng && log.locationName
+                locationLat && locationLng && locationName
                   ? {
-                      lat: Number(log.locationLat),
-                      lng: Number(log.locationLng),
-                      placeName: log.locationName,
+                      lat: Number(locationLat),
+                      lng: Number(locationLng),
+                      placeName: locationName,
                     }
                   : undefined
               }

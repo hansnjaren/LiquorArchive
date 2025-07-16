@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 
 declare global {
@@ -20,160 +21,175 @@ interface Props {
 
 export default function LocationSelector({ value, onChange }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const suggestionsRef = useRef<HTMLUListElement>(null);
+
   const [keyword, setKeyword] = useState(value?.placeName ?? "");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [map, setMap] = useState<any>(null);
   const [marker, setMarker] = useState<any>(null);
-  const [debugState, setDebugState] = useState<any>({});
+  const [sdkReady, setSdkReady] = useState(false);
+  const [open, setOpen] = useState(false);
 
+  // ⚠️ 반드시 value 변경 영향 제거 → map & SDK 준비 이후에만 실행
+  const initialValueRef = useRef(value);
+
+  // 1. Kakao Maps SDK 로드 및 지도 초기화
   useEffect(() => {
-    const getDebugInfo = (label = "") => ({
-      label,
-      kakao: typeof window !== "undefined" && !!window.kakao,
-      kakaoMaps: typeof window !== "undefined" && !!window.kakao?.maps,
-      mapRef: !!mapRef.current,
-      offsetWidth: mapRef.current?.offsetWidth,
-      offsetHeight: mapRef.current?.offsetHeight,
-      value,
-      map: !!map,
-      marker: !!marker,
-    });
+    if (typeof window === "undefined") return;
+    if (!mapRef.current) return;
+    if (map) return;
 
-    setDebugState(getDebugInfo("mounted"));
+    const fallbackCenter = { lat: 37.5665, lng: 126.978 };
 
-    if (
-      typeof window === "undefined" ||
-      !window.kakao ||
-      !window.kakao.maps ||
-      !mapRef.current ||
-      map
-    )
-      return;
+    function createMap(center: { lat: number; lng: number }) {
+      const kakao = window.kakao;
 
-    window.kakao.maps.load(() => {
-      setDebugState(getDebugInfo("kakao.maps.load 실행됨"));
+      const mapInstance = new kakao.maps.Map(mapRef.current!, {
+        center: new kakao.maps.LatLng(center.lat, center.lng),
+        level: 3,
+      });
+      setMap(mapInstance);
 
-      const fallbackCenter = new window.kakao.maps.LatLng(37.5665, 126.9780);
+      const checkServices = setInterval(() => {
+        if (kakao.maps.services) {
+          clearInterval(checkServices);
+          setSdkReady(true);
+          console.log("✅ Kakao Maps SDK 로드 완료");
+        }
+      }, 50);
+    }
 
-      const createMapWithCenter = (center: any) => {
-        const instance = new window.kakao.maps.Map(mapRef.current, {
-          center,
-          level: 3,
-        });
-        setMap(instance);
-
-        setTimeout(() => {
-          instance.relayout();
-          instance.setCenter(center);
-        }, 300);
-      };
-
-      // 1. value가 있으면 해당 좌표로 시작
-      if (value) {
-        const center = new window.kakao.maps.LatLng(value.lat, value.lng);
-        createMapWithCenter(center);
-      }
-      // 2. 현재 위치 사용 (geolocation)
-      else if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const center = new window.kakao.maps.LatLng(
-              pos.coords.latitude,
-              pos.coords.longitude
+    const loadMap = () => {
+      if (window.kakao && window.kakao.maps && window.kakao.maps.load) {
+        window.kakao.maps.load(() => {
+          if (initialValueRef.current) {
+            createMap(initialValueRef.current);
+          } else if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const userCenter = {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                };
+                createMap(userCenter);
+                onChange({ ...userCenter, placeName: "" });
+              },
+              () => createMap(fallbackCenter)
             );
-            createMapWithCenter(center);
-
-            // ✅ 위치가 선택되지 않은 상태일 때, 현재 위치를 선택값으로 설정
-            onChange({
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              placeName: "", // 장소 이름은 빈 값이지만 좌표는 셋업됨
-            });
-          },
-          () => {
-            createMapWithCenter(fallbackCenter);
+          } else {
+            createMap(fallbackCenter);
           }
-        );
+        });
       }
-      // 3. geolocation 지원 안되면 fallback
-      else {
-        createMapWithCenter(fallbackCenter);
-      }
-    });
-  }, [value]);
+    };
 
-  // value 변경 → 마커 이동
+    loadMap();
+  }, [map, onChange]);
+
+  // 2. 마커 위치 반영 (`sdkReady` 이후에만)
   useEffect(() => {
-    if (!map || !value || !window.kakao?.maps) return;
+    if (!map || !sdkReady || !value) return;
+    if (!window.kakao?.maps?.LatLng) return;
 
     const coords = new window.kakao.maps.LatLng(value.lat, value.lng);
     map.setCenter(coords);
+
     if (marker) marker.setMap(null);
-    const mk = new window.kakao.maps.Marker({ map, position: coords });
-    setMarker(mk);
-  }, [value, map]);
 
-  // 장소 검색
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setKeyword(val);
+    const newMarker = new window.kakao.maps.Marker({
+      map,
+      position: coords,
+    });
+    setMarker(newMarker);
 
-    if (
-      !val.trim() ||
-      !map ||
-      !window.kakao?.maps?.services
-    ) {
+    console.log("📍 마커 위치 갱신:", coords);
+  }, [map, sdkReady, value]);
+
+  // 3. 장소 검색 기능
+  useEffect(() => {
+    if (!sdkReady || !keyword.trim() || !map) {
       setSuggestions([]);
       return;
     }
 
     const ps = new window.kakao.maps.services.Places();
-    ps.keywordSearch(val, (data: any, status: any) => {
-      if (status === window.kakao.maps.services.Status.OK && data.length > 0) {
+
+    ps.keywordSearch(keyword, (data: any[], status: string) => {
+      if (
+        status === window.kakao.maps.services.Status.OK &&
+        data.length > 0
+      ) {
         setSuggestions(data);
       } else {
         setSuggestions([]);
       }
     });
-  };
+  }, [sdkReady, keyword, map]);
 
-  // 장소 선택
+  // 4. 장소 선택 시
   const handleSelect = (place: any) => {
-    if (!window.kakao?.maps || !map) return;
+    if (!map || !window.kakao.maps.LatLng) return;
 
     const coords = new window.kakao.maps.LatLng(place.y, place.x);
     map.setCenter(coords);
-    if (marker) marker.setMap(null);
 
-    const mk = new window.kakao.maps.Marker({ map, position: coords });
-    setMarker(mk);
+    if (marker) marker.setMap(null);
+    const newMarker = new window.kakao.maps.Marker({
+      map,
+      position: coords,
+    });
+    setMarker(newMarker);
+
     setKeyword(place.place_name);
     setSuggestions([]);
+    setOpen(false);
 
     onChange({
       lat: Number(place.y),
       lng: Number(place.x),
       placeName: place.place_name,
     });
+
+    console.log("✅ 장소 선택:", place.place_name);
   };
 
-  // 디버깅 출력
+  // 5. 외부 클릭으로 닫기
   useEffect(() => {
-    console.log("🧪 지도 디버깅:", debugState);
-  }, [debugState]);
+    if (!open && suggestions.length === 0) return;
+
+    const handler = (e: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+        setSuggestions([]);
+      }
+    };
+    window.addEventListener("mousedown", handler);
+    return () => window.removeEventListener("mousedown", handler);
+  }, [open, suggestions.length]);
 
   return (
     <div>
-      {/* 검색 입력 */}
       <div className="relative w-full">
         <input
           value={keyword}
-          onChange={handleInputChange}
-          placeholder="장소 검색"
+          onChange={(e) => {
+            setKeyword(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          autoComplete="off"
           className="w-full border p-2 rounded"
+          placeholder="장소 검색"
         />
-        {suggestions.length > 0 && (
-          <ul className="absolute top-full left-0 right-0 z-10 bg-white border rounded shadow max-h-60 overflow-y-auto">
+
+        {open && suggestions.length > 0 && (
+          <ul
+            ref={suggestionsRef}
+            className="absolute top-full left-0 right-0 mt-1 bg-white border rounded shadow max-h-60 overflow-y-auto z-50"
+          >
             {suggestions.map((place) => (
               <li
                 key={place.id}
@@ -192,14 +208,13 @@ export default function LocationSelector({ value, onChange }: Props) {
         )}
       </div>
 
-      {/* 지도 */}
       <div
         ref={mapRef}
         style={{
           width: "100%",
           height: "300px",
-          borderRadius: 12,
           marginTop: 16,
+          borderRadius: 12,
           background: "#eee",
         }}
         className="shadow"

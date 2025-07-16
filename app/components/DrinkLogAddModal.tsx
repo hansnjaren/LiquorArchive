@@ -1,9 +1,12 @@
+"use client";
+
 import { useRef, useState, useEffect } from "react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import { TITLE_COLOR } from "../constants";
 import { DrinkType } from "../types";
 import { DrinkTypeDropdown } from "./DrinkTypeDropdown";
 import LocationSelector from "./LocationSelector";
+import { updateDrinkList } from "../utils/drinkList";
 
 interface DrinkLogAddModalProps {
   defaultDate?: Date;
@@ -48,9 +51,9 @@ export default function DrinkLogAddModal({
     { bottleId: "", count: "", search: "", dropdownOpen: false }
   ]);
   const [closing, setClosing] = useState(false);
+
   const backdropRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-  const [dragStartedInside, setDragStartedInside] = useState(false);
 
   const now = new Date();
   const todayStr = getLocalDateString(now);
@@ -59,67 +62,49 @@ export default function DrinkLogAddModal({
 
   const handleRequestClose = () => setClosing(true);
 
+  // ✅ 외부 클릭 감지를 위한 window-level 이벤트
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(e.target as Node)
+      ) {
+        handleRequestClose();
+      }
+    };
+
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // 애니메이션 종료 시 모달 종료
   useEffect(() => {
     if (!closing) return;
     const el = backdropRef.current;
     if (!el) return;
+
     const handleAnimationEnd = () => onClose();
+
     el.addEventListener("animationend", handleAnimationEnd);
-    return () => el.removeEventListener("animationend", handleAnimationEnd);
+    return () => {
+      el.removeEventListener("animationend", handleAnimationEnd);
+    };
   }, [closing, onClose]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (modalRef.current && modalRef.current.contains(e.target as Node)) {
-      setDragStartedInside(true);
-    } else {
-      setDragStartedInside(false);
-    }
-  };
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (dragStartedInside) {
-      setDragStartedInside(false);
-      return;
-    }
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      handleRequestClose();
-    }
-  };
-
-  const handleDrinkChange = (idx: number, key: "bottleId" | "count" | "search" | "dropdownOpen", value: string | boolean) => {
-    setDrinks(prev => {
-      const next = [...prev];
-      next[idx] = { ...next[idx], [key]: value };
-      if (
-        next.length < 10 &&
-        next[next.length - 1].bottleId &&
-        next[next.length - 1].count
-      ) {
-        next.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
-      }
-      while (
-        next.length > 1 &&
-        !next[next.length - 1].bottleId &&
-        !next[next.length - 1].count &&
-        !next[next.length - 2].bottleId &&
-        !next[next.length - 2].count
-      ) {
-        next.pop();
-      }
-      return next;
-    });
+  const handleDrinkChange = (
+    idx: number,
+    key: "bottleId" | "count" | "search" | "dropdownOpen",
+    value: string | boolean
+  ) => {
+    setDrinks(prev => updateDrinkList(prev, idx, key, value));
   };
 
   const handleRemoveDrink = (idx: number) => {
     setDrinks(prev => {
-      let next = prev.filter((_, i) => i !== idx);
-      if (
-        next.length === 0 ||
-        (next[next.length - 1].bottleId && next[next.length - 1].count)
-      ) {
-        next.push({ bottleId: "", count: "", search: "", dropdownOpen: false });
-      }
-      return next;
+      const next = prev.filter((_, i) => i !== idx);
+      return updateDrinkList(next, next.length - 1, "dropdownOpen", false);
     });
   };
 
@@ -149,8 +134,9 @@ export default function DrinkLogAddModal({
       alert("미래 시각의 기록은 추가할 수 없습니다.");
       return;
     }
+
     if (!feelingScore) {
-      alert("기분 점수를 입력하세요.");
+      alert("기분 점수를 선택하세요.");
       return;
     }
 
@@ -170,16 +156,14 @@ export default function DrinkLogAddModal({
       });
 
       if (!res.ok) {
-        let errMsg = "에러: " + res.status;
-        try {
-          const err = await res.json();
-          errMsg = "에러: " + (err.message ?? res.status);
-        } catch {}
+        const err = await res.json().catch(() => null);
+        const errMsg = err?.message ?? `에러: ${res.status}`;
         alert(errMsg);
         return;
       }
 
       const result = await res.json();
+
       onAdd(result);
       setDrinks([{ bottleId: "", count: "", search: "", dropdownOpen: false }]);
       setNote("");
@@ -199,19 +183,13 @@ export default function DrinkLogAddModal({
       className={`fixed inset-0 bg-black/40 flex items-center justify-center z-50 ${
         closing ? "animate-modal-out" : "animate-modal-in"
       }`}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleBackdropClick}
     >
       <div
         ref={modalRef}
         className="bg-white rounded-lg shadow-lg max-w-md w-full p-0"
         style={{ overflow: "hidden" }}
       >
-        <div
-          className="relative p-6 overflow-y-auto max-h-[80vh] rounded-lg"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "#d4d4d8 #fff" }}
-          onClick={e => e.stopPropagation()}
-        >
+        <div className="relative p-6 overflow-y-auto max-h-[80vh] rounded-lg">
           <button
             onClick={handleRequestClose}
             className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl"
@@ -223,7 +201,7 @@ export default function DrinkLogAddModal({
             음주 기록 추가
           </h3>
           <form onSubmit={handleSubmit} className="space-y-3">
-            {/* 날짜 선택 */}
+            {/* 날짜 */}
             <div>
               <label className="block text-sm font-semibold mb-1">날짜</label>
               <input
@@ -235,7 +213,8 @@ export default function DrinkLogAddModal({
                 max={maxDate}
               />
             </div>
-            {/* 시간 선택 */}
+
+            {/* 시간 */}
             <div>
               <label className="block text-sm font-semibold mb-1">시간</label>
               <input
@@ -247,16 +226,17 @@ export default function DrinkLogAddModal({
                 max={maxTime}
               />
             </div>
-            {/* 술 입력행 */}
+
+            {/* 술 종류 및 개수 */}
             <div>
-              <label className="block text-sm font-semibold mb-1">술 종류 및 개수</label>
+              <label className="block text-sm font-semibold mb-1">
+                술 종류 및 개수
+              </label>
               {drinks.map((drink, idx) => {
                 const bottle = bottles.find(b => b.id === drink.bottleId);
                 const count = Number(drink.count);
                 const totalMl =
-                  bottle && !isNaN(count) && count > 0
-                    ? count * Number(bottle.standardMl)
-                    : null;
+                  bottle && count > 0 ? count * Number(bottle.standardMl) : null;
 
                 return (
                   <div key={idx} className="mb-3">
@@ -294,12 +274,10 @@ export default function DrinkLogAddModal({
                         </button>
                       )}
                     </div>
-
-                    {/* 용량 안내 - 한 줄 아래 */}
                     {!!bottle && (
                       <div className="mt-1 ml-1 text-[13px] text-blue-700 font-semibold">
                         1개 = {bottle.standardMl}ml
-                        {count > 0 && !isNaN(count) && (
+                        {count > 0 && (
                           <> | {count}개 = {totalMl}ml</>
                         )}
                       </div>
@@ -308,21 +286,14 @@ export default function DrinkLogAddModal({
                 );
               })}
             </div>
-            {/* 장소명 */}
-            {/* <div>
-              <label className="block text-sm font-semibold mb-1">장소명 (선택)</label>
-              <input
-                type="text"
-                className="w-full border rounded px-3 py-2"
-                value={locationName}
-                onChange={e => setLocationName(e.target.value)}
-                placeholder="예: 홍대 주점"
-              />
-            </div> */}
+
+            {/* 위치선택 */}
             <LocationSelector
-              value={locationLat && locationLng && locationName
-                ? { lat: Number(locationLat), lng: Number(locationLng), placeName: locationName }
-                : undefined}
+              value={
+                locationLat && locationLng && locationName
+                  ? { lat: Number(locationLat), lng: Number(locationLng), placeName: locationName }
+                  : undefined
+              }
               onChange={loc => {
                 if (loc) {
                   setLocationLat(String(loc.lat));
@@ -338,7 +309,9 @@ export default function DrinkLogAddModal({
 
             {/* 기분 점수 */}
             <div>
-              <label className="block text-sm font-semibold mb-1">기분 점수 (1~5)</label>
+              <label className="block text-sm font-semibold mb-1">
+                기분 점수 (1~5)
+              </label>
               <select
                 className="w-full border rounded px-3 py-2"
                 value={feelingScore}
@@ -352,6 +325,7 @@ export default function DrinkLogAddModal({
                 <option value="5">5 (최고)</option>
               </select>
             </div>
+
             {/* 메모 */}
             <div>
               <label className="block text-sm font-semibold mb-1">메모 (선택)</label>
@@ -363,6 +337,7 @@ export default function DrinkLogAddModal({
                 placeholder="메모를 입력하세요"
               />
             </div>
+
             <button
               type="submit"
               className="w-full text-white py-2 rounded transition font-bold cursor-pointer"

@@ -122,10 +122,11 @@ export default function Home() {
   return (
     <div className="grid place-items-center w-full">
       <Script
-        src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&autoload=false`}
+        src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&libraries=services&autoload=false`}
         strategy="afterInteractive"
         onLoad={handleKakaoScriptLoad}
       />
+
 
       <BodySection
         videoSrc="title.mp4"
