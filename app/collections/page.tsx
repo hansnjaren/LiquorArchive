@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { BottleSearchInput } from "../components/BottleSearchInput";
 import { BottleGrid } from "../components/BottleGrid";
+import { BottleSkeletonCard } from "../components/BottleSkeletonCard";
 import type { Bottle, Purchase } from "../types";
 
 async function fetchBottles(): Promise<Bottle[]> {
@@ -32,16 +33,31 @@ export default function BottleListPage() {
         setBottles(bottles);
         setPurchases(purchases);
       })
-      .catch(e => alert(e.message))
+      .catch((e) => alert(e.message))
       .finally(() => setLoading(false));
   }, [status]);
 
   const userId = session?.user?.id;
 
-  if (status === "loading" || loading) return <div className="p-6">로딩 중...</div>;
-  if (!userId) return <div className="p-6 text-red-500">로그인이 필요합니다.</div>;
+  // ✅ 여기서부터 스켈레톤 보여주기
+  if (status === "loading" || loading) {
+    return (
+      <div className="p-6 h-[calc(100vh-80px)] overflow-hidden">
+        <BottleSearchInput value={search} onChange={setSearch} />
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mt-4">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <BottleSkeletonCard key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  // 구매 병수가 1병 이상인 bottle만 추려서 표시
+  if (!userId) {
+    return <div className="p-6 text-red-500">로그인이 필요합니다.</div>;
+  }
+
+  // 필터링된 구매 병 bottle 목록
   const bottlesWithPurchase = bottles.filter((bottle) => {
     const totalQuantity = purchases
       .filter((p) => p.userId === userId && p.bottleId === bottle.id)
@@ -49,7 +65,6 @@ export default function BottleListPage() {
     return totalQuantity > 0;
   });
 
-  // 실시간 검색 필터
   const filteredBottles = bottlesWithPurchase.filter((bottle) => {
     const keyword = search.trim().toLowerCase();
     if (!keyword) return true;
@@ -61,10 +76,15 @@ export default function BottleListPage() {
   });
 
   return (
-    <div className="p-6">
+    <div className="p-6 min-h-screen overflow-auto transition-all duration-300">
       <BottleSearchInput value={search} onChange={setSearch} />
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-        <BottleGrid bottles={filteredBottles} purchases={purchases} userId={userId} />
+
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mt-4">
+        <BottleGrid
+          bottles={filteredBottles}
+          purchases={purchases}
+          userId={userId}
+        />
       </div>
     </div>
   );

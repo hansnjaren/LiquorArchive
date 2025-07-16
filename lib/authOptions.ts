@@ -65,12 +65,24 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      // 세션마다 항상 DB에서 최신 사용자 정보를 가져옴
+      const user = await db.user.findUnique({
+        where: { id: token.userId },
+        select: { id: true, email: true, name: true, image: true }, // 필요한 필드만
+      });
+
       return {
         ...session,
-        user: { id: token.userId, email: token.email, name: token.name },
+        user: {
+          id: user?.id ?? token.userId,
+          email: user?.email ?? token.email,
+          name: user?.name ?? token.name,
+          image: user?.image ?? null, // 기본 이미지 처리
+        },
         isNewUser: token.isNewUser,
       };
-    },
+    }
+
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
